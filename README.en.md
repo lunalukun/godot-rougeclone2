@@ -11,6 +11,10 @@ Japanese version: [README.md](README.md)
 - Goal: A portrait-oriented gameplay experience with touch-first controls
 - Policy: Preserve core Rogue gameplay while optimizing UI and controls for mobile
 
+## Development Environment
+
+- Godot: 4.6
+
 ## Upstream Reference
 
 - Rogue2.Official: https://github.com/suzukiiichiro/Rogue2.Official
@@ -49,6 +53,10 @@ moral rights, and handling of original notices/comments.
 - The game behavior is implemented to match the original as closely as possible, except for UI-specific parts.
 - If you find behavior that differs from the original, please report it as an Issue.
 - Testing is still in progress and not yet sufficient. If you find bugs, please report them as Issues as well.
+
+## Debug Features
+
+- An invincibility mode is included for debugging purposes.
 
 ## Distribution Plan
 
