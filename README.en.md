@@ -15,6 +15,10 @@ Japanese version: [README.md](README.md)
 
 - Godot: 4.6
 
+## Screenshot
+
+![Gameplay screenshot](docs/images/play.png)
+
 ## Upstream Reference
 
 - Rogue2.Official: https://github.com/suzukiiichiro/Rogue2.Official

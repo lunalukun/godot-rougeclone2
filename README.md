@@ -15,6 +15,10 @@ English version: [README.en.md](README.en.md)
 
 - Godot: 4.6
 
+## スクリーンショット
+
+![プレイ画面](docs/images/play.png)
+
 ## 参照元
 
 - Rogue2.Official: https://github.com/suzukiiichiro/Rogue2.Official
