@@ -17,7 +17,7 @@ Japanese version: [README.md](README.md)
 
 ## Screenshot
 
-![Gameplay screenshot](docs/images/play.png)
+<img src="docs/images/play.png" alt="Gameplay screenshot" width="286">
 
 ## Upstream Reference
 
