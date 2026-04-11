@@ -1,0 +1,14 @@
+{
+  "POTION_COLORS_JA": ["青色", "赤色", "緑色", "灰色", "茶色", "透明", "桃色", "白色", "紫色", "黒色", "黄色", "水色", "ぶどう色", "橙色"],
+  "POTION_COLORS_EN": ["blue", "red", "green", "grey", "brown", "clear", "pink", "white", "purple", "black", "yellow", "plaid", "burgundy", "beige"],
+  "WEAPON_NAMES_JA": ["短剣", "矢", "メイス", "ロングソード", "弓", "ダーツ", "手裏剣", "両手剣"],
+  "WEAPON_NAMES_EN": ["dagger", "arrow", "mace", "long sword", "bow", "dart", "shuriken", "two-handed sword"],
+  "ARMOR_NAMES_JA": ["革の鎧", "鎖かたびら", "スケールメイル", "鎖帷子", "帯金鎧", "スプリントメイル", "板金鎧"],
+  "ARMOR_NAMES_EN": ["leather armor", "ring mail", "scale mail", "chain mail", "banded mail", "splint mail", "plate mail"],
+  "WAND_MATERIALS_JA": ["鋼鉄", "青銅", "金", "銀", "銅", "ニッケル", "鉄", "チーク", "樫", "桜", "白樺", "楓"],
+  "WAND_MATERIALS_EN": ["steel", "bronze", "gold", "silver", "copper", "nickel", "iron", "teak", "oak", "cherry", "birch", "maple"],
+  "RING_GEMS_JA": ["ダイヤ", "アクアマリン", "るり", "ルビー", "エメラルド", "サファイア", "紫水晶", "水晶", "虎目石", "オパール", "真珠", "ざくろ石"],
+  "RING_GEMS_EN": ["diamond", "aquamarine", "lapis", "ruby", "emerald", "sapphire", "amethyst", "crystal", "tiger eye", "opal", "pearl", "garnet"],
+  "SCROLL_SYLLABLES_JA": ["ぶん", "に", "とす", "ら", "ぽみ", "ぷ", "どん", "せろ", "い", "か", "そろ", "む", "ろお", "わ", "おふ", "ろん"],
+  "SCROLL_SYLLABLES_EN": ["ble", "foo", "bar", "tem", "zor", "mik", "qua", "shi", "lum", "nar", "vor", "zen", "tri", "pha", "dor", "kel"]
+}

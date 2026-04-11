@@ -1,0 +1,190 @@
+# UI text resources (English)
+# format: key=value
+
+tab.controls=Controls
+tab.equipment=Equipment
+tab.inventory=Inventory
+tab.log=Log
+
+mode.step=STEP
+mode.run_hit=RUN HIT
+mode.run_before=RUN BEFORE
+
+action.pickup=Pickup
+action.trap_identify=Trap ID
+action.rest=Rest
+action.search=Search
+action.search10=Search x10
+action.rest10=Rest x10
+action.invincible=Invincible
+action.interrupt=Interrupt
+action.quit=Quit
+action.zap=Zap
+action.throw=Throw
+action.pickup_toggle=No Pickup
+action.fight_to_death=All-Out
+
+symbol.button=Symbols
+symbol.title=Symbol Legend
+symbol.tab.items=Items
+symbol.tab.monsters=Monsters
+symbol.close=Close
+
+equipment.header=Current Equipment
+equipment.weapon=Weapon
+equipment.armor=Armor
+equipment.ring_left=Ring L
+equipment.ring_right=Ring R
+
+inventory.header=Inventory %d / %d
+inventory.action.use=Use
+inventory.action.name=Name
+inventory.action.drop=Drop
+
+popup.common.cancel=Cancel
+popup.call_name.title=Name this item
+popup.call_name.placeholder=Enter name
+popup.call_name.confirm=OK
+popup.wand_select.title=Which wand do you want to zap with?
+popup.wand_select.confirm=Use
+popup.throw_select.title=What do you want to throw?
+popup.throw_select.confirm=Throw
+popup.equip_select.title=Choose item to equip
+popup.equip_select.confirm=Equip
+popup.identify_select.title=What would you like to identify?
+popup.identify_select.confirm=Identify
+
+player.label=you
+
+log.none_recent=No recent messages.
+
+message.autosave.resumed=Resumed from autosave.
+message.autosave.exists_read_failed=Autosave exists but could not be read.
+message.autosave.corrupted=Autosave data is corrupted.
+message.autosave.schema_incompatible=Autosave schema is incompatible.
+message.autosave.resume_failed=Failed to resume from autosave: %s
+
+message.pickup.nothing_here=Nothing here to pick up.
+message.search.found=Found something.
+message.search.failed=Search failed.
+message.interrupt.nothing=Nothing to interrupt.
+message.interrupt.done=Interrupted.
+message.quit.confirm_again=Really quit? Press Quit again.
+
+message.item.no_selected=No item selected.
+message.item.cant_use=You can't use that.
+message.item.already_identified=Already identified.
+message.item.cannot_name=That item cannot be named.
+message.item.cursed=You can't. It's cursed.
+
+message.call_name.default=tag-%d
+message.call_name.empty=Name cannot be empty.
+message.call_name.now_called=Now called %s.
+
+message.drop.already_there=There's already something there.
+message.drop.cannot_now=You can't drop that now.
+message.drop.done=Dropped %s.
+
+slot.weapon=weapon
+slot.armor=armor
+slot.left_ring=left ring
+slot.right_ring=right ring
+
+item.generic=item
+item.unknown=item
+item.food=food
+item.gold_format=%d gold
+item.mysterious=mysterious
+item.called_format=%s called %s
+item.potion.color=%s potion
+item.scroll.entitled=scroll entitled %s
+item.wand.material=%s wand
+item.ring.gem=%s ring
+
+item.scroll.protect_armor=scroll of protect armor
+item.scroll.hold_monster=scroll of hold monster
+item.scroll.enchant_weapon=scroll of enchant weapon
+item.scroll.enchant_armor=scroll of enchant armor
+item.scroll.identify=scroll of identify
+item.scroll.teleportation=scroll of teleportation
+item.scroll.sleep=scroll of sleep
+item.scroll.scare_monster=scroll of scare monster
+item.scroll.remove_curse=scroll of remove curse
+item.scroll.create_monster=scroll of create monster
+item.scroll.aggravate_monster=scroll of aggravate monster
+item.scroll.magic_mapping=scroll of magic mapping
+item.scroll.generic=scroll
+
+item.potion.increase_strength=potion of increase strength
+item.potion.restore_strength=potion of restore strength
+item.potion.healing=potion of healing
+item.potion.extra_healing=potion of extra healing
+item.potion.poison=potion of poison
+item.potion.raise_level=potion of raise level
+item.potion.blindness=potion of blindness
+item.potion.hallucination=potion of hallucination
+item.potion.detect_monster=potion of detect monster
+item.potion.detect_objects=potion of detect objects
+item.potion.confusion=potion of confusion
+item.potion.levitation=potion of levitation
+item.potion.haste_self=potion of haste self
+item.potion.see_invisible=potion of see invisible
+item.potion.generic=potion
+
+item.wand.teleport_away=wand of teleport away
+item.wand.slow_monster=wand of slow monster
+item.wand.invisibility=wand of invisibility
+item.wand.polymorph=wand of polymorph
+item.wand.haste_monster=wand of haste monster
+item.wand.sleep=wand of sleep
+item.wand.drain_life=wand of drain life
+item.wand.magic_missile=wand of magic missile
+item.wand.cancellation=wand of cancellation
+item.wand.do_nothing=wand of do nothing
+item.wand.generic=wand
+
+item.ring.stealth=ring of stealth
+item.ring.teleportation=ring of teleportation
+item.ring.regeneration=ring of regeneration
+item.ring.slow_digestion=ring of slow digestion
+item.ring.add_strength=ring of add strength
+item.ring.sustain_strength=ring of sustain strength
+item.ring.dexterity=ring of dexterity
+item.ring.adornment=ring of adornment
+item.ring.see_invisible=ring of see invisible
+item.ring.maintain_armor=ring of maintain armor
+item.ring.searching=ring of searching
+item.ring.generic=ring
+
+equipment.none=None
+equipment.cursed_suffix= (cursed)
+
+message.equip.no_item_for_slot=No equippable item for this slot.
+message.equip.cannot=That item cannot be equipped.
+message.equip.done=Equipped %s.
+message.unequip.nothing=Nothing to unequip.
+message.unequip.done=Unequipped %s.
+
+message.stairs.here=You see the stairs here.
+message.stairs.descend=You descend the stairs.
+message.defeated.simple=Defeated.
+message.wand.not_wand=That item is not a wand.
+message.scroll.turns_to_dust=The scroll turns to dust as you pick it up.
+message.flame.scorch=Flame scorches you.
+message.level.welcome=Welcome to level %d
+message.freeze.by_monster=You are frozen by %s!
+message.invincible.prevented_death=Invincible mode prevented death.
+message.ranking.new_game_prompt=Press any command: new game
+message.fight_to_death.on=Fight-to-death mode ON.
+message.fight_to_death.off=Fight-to-death mode OFF.
+message.invincible.on=Invincible mode ON.
+message.invincible.off=Invincible mode OFF.
+
+death.poison_dart=killed by a poison dart
+death.killed_by_monster=killed by %s
+death.you_died=You died.
+death.starvation=died of starvation
+death.hypothermia=You die of hypothermia.
+death.default=died
+death.tomb.rest_line_1= REST 
+death.tomb.rest_line_2=  IN  

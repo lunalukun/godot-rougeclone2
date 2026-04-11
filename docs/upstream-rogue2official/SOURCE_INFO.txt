@@ -1,0 +1,5 @@
+Source repository: https://github.com/suzukiiichiro/Rogue2.Official
+Fetched at (UTC): 2026-04-11T03:33:59Z
+Upstream commit: 334315ea068e7ae8605ff9be5d6e04b0658cd330
+Purpose: Bundle upstream documentation for license-compliant redistribution.
+Note: Files in this directory are copied from upstream documentation.

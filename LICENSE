@@ -1,0 +1,25 @@
+Rogue Mobile (Godot) License Notice
+==================================
+
+This project is an adaptation based on Rogue2.Official (rougeclone2),
+including adapted in-game language/text files derived from original files.
+
+Accordingly, use, modification, and redistribution of this project are
+handled in conformance with the upstream license/permission terms described in:
+
+- upstream repository: https://github.com/suzukiiichiro/Rogue2.Official
+- upstream COPYING:    https://github.com/suzukiiichiro/Rogue2.Official/blob/master/COPYING
+- bundled copy:        docs/upstream-rogue2official/COPYING
+
+Key redistribution conditions (as described in upstream COPYING) include:
+
+1) Do not sell for profit.
+2) Include all documents.
+3) Do not add further restrictions on use, modification, or redistribution
+   of distributed source or executable files.
+
+Please also respect upstream statements regarding copyright,
+moral rights, and handling of original notices/comments.
+
+If there is any discrepancy between this notice and upstream COPYING,
+upstream COPYING takes precedence.
