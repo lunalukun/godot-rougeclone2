@@ -1401,6 +1401,8 @@ func _apply_localized_texts() -> void:
 	_apply_action_labels_localized(is_ja)
 	_apply_equipment_labels_localized(is_ja)
 	_apply_log_labels_localized(is_ja)
+	# Rebuild visible inventory button labels after item names are relocalized.
+	_refresh_inventory_palette()
 	_update_inventory_header()
 	_apply_inventory_action_labels_localized(is_ja)
 	_update_equipment_panel()
@@ -7831,7 +7833,7 @@ func _hide_minimap() -> void:
 func _update_minimap() -> void:
 	if minimap_frame == null or minimap_texture_rect == null or play_area == null:
 		return
-	if game_over:
+	if game_over and (post_game_phase == "tomb" or post_game_phase == "ranking"):
 		_hide_minimap()
 		return
 
