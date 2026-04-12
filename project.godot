@@ -24,3 +24,9 @@ config/icon="uid://dl02yvmnvp180"
 window/size/viewport_width=576
 window/size/viewport_height=980
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true

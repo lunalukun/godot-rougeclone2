@@ -392,6 +392,7 @@ var game_won: bool = false
 var death_reason: String = ""
 var death_kind: String = ""
 var death_monster_name: String = ""
+var death_monster_char: String = ""
 var post_game_phase: String = ""
 var score_recorded: bool = false
 var leaderboard_cache: Array = []
@@ -464,10 +465,17 @@ var RING_GEMS_EN: PackedStringArray = []
 var SCROLL_SYLLABLES_JA: PackedStringArray = []
 var SCROLL_SYLLABLES_EN: PackedStringArray = []
 
+@onready var root_margin: MarginContainer = $RootMargin
 @onready var play_area: PanelContainer = $RootMargin/VerticalSplit/PlayArea
+@onready var play_viewport: Control = $RootMargin/VerticalSplit/PlayArea/PlayVBox/PlayViewport
+@onready var message_line_label: Label = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MessageLine
 @onready var play_text: RichTextLabel = $RootMargin/VerticalSplit/PlayArea/PlayVBox/PlayViewport/PlayText
 @onready var tomb_overlay_text: RichTextLabel = $RootMargin/VerticalSplit/PlayArea/PlayVBox/PlayViewport/TombOverlay
+@onready var status_line_label: Label = $RootMargin/VerticalSplit/PlayArea/PlayVBox/StatusLine
 @onready var minimap_frame: PanelContainer = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapFrame
+@onready var minimap_top_row: HBoxContainer = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow
+@onready var lang_ja_button: Button = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow/LangJaButton
+@onready var lang_en_button: Button = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow/LangEnButton
 @onready var minimap_texture_rect: TextureRect = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapFrame/MiniMapCenter/MiniMapTexture
 @onready var minimap_overlay: Control = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapFrame/MiniMapCenter/MiniMapOverlay
 @onready var minimap_marker_border: ColorRect = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapFrame/MiniMapCenter/MiniMapOverlay/MiniMapMarkerBorder
@@ -495,7 +503,7 @@ var SCROLL_SYLLABLES_EN: PackedStringArray = []
 @onready var pickup_toggle_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/PickupToggle
 @onready var zap_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Zap
 @onready var throw_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Throw
-var symbol_legend_button: Button = null
+@onready var symbol_legend_button: Button = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow/MiniMapSymbolsButton
 @onready var symbol_legend_popup: PopupPanel = $SymbolLegendPopup
 @onready var symbol_legend_title_label: Label = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendTitle
 @onready var symbol_legend_tabs: TabContainer = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendTabs
@@ -566,6 +574,12 @@ var trap_door_pending: bool = false
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _rng_seed_override: String = ""
 var auto_pickup_non_gold_enabled: bool = true
+var _status_line_default_color: Color = Color(0.95, 0.95, 0.95, 1.0)
+var _last_message_advance_input_msec: int = -1000
+var _play_text_mono_font: Font = null
+var _play_text_mono_font_size: int = 14
+var _play_text_ui_font: Font = null
+var _play_text_ui_font_size: int = 14
 
 const COLOR_THEME: String = "cbmyg"
 const COLOR_HEX: Dictionary = {
@@ -593,6 +607,22 @@ const MINIMAP_PADDING_PX: float = 6.0
 const MINIMAP_MIN_SIZE_PX: float = 64.0
 const MINIMAP_MAX_HEIGHT_PX: float = 160.0
 const MINIMAP_DIM_FACTOR: float = 0.45
+const CONTENT_EDGE_MARGIN_PX: int = 12
+const CONTENT_EDGE_EXTRA_PX: int = 4
+const PLAY_LINE_LEFT_PAD_CHARS_DESKTOP: int = 1
+const PLAY_LINE_LEFT_PAD_CHARS_MOBILE: int = 1
+const BOTTOM_TABS_TOUCH_MIN_HEIGHT_PX: float = 44.0
+const BOTTOM_TABS_FONT_SIZE: int = 16
+const BOTTOM_TABS_H_PADDING_PX: int = 8
+const BOTTOM_TABS_V_PADDING_PX: int = 6
+const TOMB_OVERLAY_VERTICAL_PAD_LINES: int = 0
+const TOMB_OVERLAY_ROW_SHIFT: int = -2
+const TOMB_OVERLAY_COL_SHIFT: int = 0
+const TOMB_OUTLINE_COL_SHIFT: int = 2
+const DIRECTION_PAD_BASE_SIZE_PX: float = 156.0
+const DIRECTION_PAD_SCALE: float = 1.5
+const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
+const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
 
 var _called_name_counter: int = 1
 var _loaded_from_autosave: bool = false
@@ -605,10 +635,16 @@ var scroll_title_tokens_per_kind: Array = []
 var called_name_by_kind: Dictionary = {}
 var id_status_by_kind: Dictionary = {}
 var _minimap_texture: ImageTexture = ImageTexture.new()
+var preferred_language: String = "" # "ja" / "en" / "" (system default)
 
 func _ready() -> void:
 	_initialize_rng()
+	_apply_root_safe_margins()
+	_load_language_preference()
 	_load_word_tables()
+	_apply_direction_pad_ui_scale()
+	_capture_status_line_default_color()
+	_capture_play_fonts()
 	play_text.bbcode_enabled = true
 	tomb_overlay_text.bbcode_enabled = true
 	tomb_overlay_text.visible = false
@@ -620,6 +656,7 @@ func _ready() -> void:
 		_start_new_level()
 	_setup_move_mode_buttons()
 	_setup_symbol_legend_button()
+	_apply_bottom_tabs_touch_target()
 	_disable_keyboard_focus_for_mobile_ui()
 	_setup_direction_pad_mode_highlight()
 	_setup_inventory_palette_ui()
@@ -646,6 +683,10 @@ func _ready() -> void:
 	throw_button.pressed.connect(_on_throw_pressed)
 	if symbol_legend_button != null:
 		symbol_legend_button.pressed.connect(_on_symbol_legend_pressed)
+	if lang_ja_button != null:
+		lang_ja_button.pressed.connect(_on_language_ja_pressed)
+	if lang_en_button != null:
+		lang_en_button.pressed.connect(_on_language_en_pressed)
 	symbol_legend_close_button.pressed.connect(_on_symbol_legend_close_pressed)
 	item_use_button.pressed.connect(_on_item_use_pressed)
 	item_equip_button.pressed.connect(_on_item_call_pressed)
@@ -670,6 +711,7 @@ func _ready() -> void:
 	identify_select_cancel_button.pressed.connect(_on_identify_select_cancel_pressed)
 	identify_select_list.item_activated.connect(_on_identify_select_item_activated)
 	direction_pad_image.gui_input.connect(_on_direction_pad_gui_input)
+	play_viewport.gui_input.connect(_on_play_text_gui_input)
 	play_text.gui_input.connect(_on_play_text_gui_input)
 	inventory_scroll.resized.connect(_on_inventory_scroll_resized)
 	play_text.resized.connect(_on_play_text_resized)
@@ -682,6 +724,8 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	match what:
+		NOTIFICATION_WM_SIZE_CHANGED:
+			_apply_root_safe_margins()
 		NOTIFICATION_APPLICATION_PAUSED:
 			_save_autosave_if_needed()
 		NOTIFICATION_APPLICATION_FOCUS_OUT:
@@ -690,6 +734,42 @@ func _notification(what: int) -> void:
 			_save_autosave_if_needed()
 		NOTIFICATION_CRASH:
 			_save_autosave_if_needed()
+
+func _apply_root_safe_margins() -> void:
+	if root_margin == null:
+		return
+
+	var left_margin: int = CONTENT_EDGE_MARGIN_PX
+	var top_margin: int = CONTENT_EDGE_MARGIN_PX
+	var right_margin: int = CONTENT_EDGE_MARGIN_PX
+	var bottom_margin: int = CONTENT_EDGE_MARGIN_PX
+
+	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
+	if safe_rect.size.x > 0 and safe_rect.size.y > 0:
+		var visible_rect: Rect2 = get_viewport().get_visible_rect()
+		var vis_left: int = int(round(visible_rect.position.x))
+		var vis_top: int = int(round(visible_rect.position.y))
+		var vis_right: int = int(round(visible_rect.position.x + visible_rect.size.x))
+		var vis_bottom: int = int(round(visible_rect.position.y + visible_rect.size.y))
+		var safe_left: int = safe_rect.position.x
+		var safe_top: int = safe_rect.position.y
+		var safe_right: int = safe_rect.position.x + safe_rect.size.x
+		var safe_bottom: int = safe_rect.position.y + safe_rect.size.y
+
+		left_margin += max(0, safe_left - vis_left)
+		top_margin += max(0, safe_top - vis_top)
+		right_margin += max(0, vis_right - safe_right)
+		bottom_margin += max(0, vis_bottom - safe_bottom)
+
+	left_margin += CONTENT_EDGE_EXTRA_PX
+	top_margin += CONTENT_EDGE_EXTRA_PX
+	right_margin += CONTENT_EDGE_EXTRA_PX
+	bottom_margin += CONTENT_EDGE_EXTRA_PX
+
+	root_margin.add_theme_constant_override("margin_left", left_margin)
+	root_margin.add_theme_constant_override("margin_top", top_margin)
+	root_margin.add_theme_constant_override("margin_right", right_margin)
+	root_margin.add_theme_constant_override("margin_bottom", bottom_margin)
 
 func _to_packed_string_array(value: Variant) -> PackedStringArray:
 	var out: PackedStringArray = []
@@ -738,43 +818,110 @@ func _disable_keyboard_focus_for_mobile_ui() -> void:
 		if node is Control:
 			(node as Control).focus_mode = Control.FOCUS_NONE
 
-func _setup_symbol_legend_button() -> void:
+func _apply_direction_pad_ui_scale() -> void:
+	if direction_pad_image == null:
+		return
+	var scaled_size: float = round(DIRECTION_PAD_BASE_SIZE_PX * DIRECTION_PAD_SCALE)
+	direction_pad_image.custom_minimum_size = Vector2(scaled_size, scaled_size)
+
+func _capture_status_line_default_color() -> void:
+	if status_line_label == null:
+		return
+	var fallback: Color = _status_line_default_color
+	_status_line_default_color = status_line_label.get_theme_color("font_color", "Label")
+	if _status_line_default_color.a <= 0.0:
+		_status_line_default_color = fallback
+
+func _capture_play_fonts() -> void:
+	if play_text != null:
+		_play_text_mono_font = play_text.get_theme_font("normal_font")
+		_play_text_mono_font_size = play_text.get_theme_font_size("normal_font_size")
+	if status_line_label != null:
+		_play_text_ui_font = status_line_label.get_theme_font("font")
+		_play_text_ui_font_size = status_line_label.get_theme_font_size("font_size")
+
+func _apply_play_fonts_for_phase() -> void:
+	var play_target_font: Font = _play_text_mono_font
+	var play_target_size: int = _play_text_mono_font_size
+	var overlay_target_font: Font = _play_text_mono_font
+	var overlay_target_size: int = _play_text_mono_font_size
+
+	if game_over:
+		# Map rows are still rendered in death/win message phases, so keep PlayText monospaced.
+		if (post_game_phase == "death_message" or post_game_phase == "win_message"):
+			play_target_font = _play_text_mono_font
+			play_target_size = _play_text_mono_font_size
+		elif post_game_phase == "tomb" and _play_text_ui_font != null:
+			# Tomb outline is ASCII-art based and must stay monospaced, overlay text needs JP glyphs.
+			overlay_target_font = _play_text_ui_font
+			overlay_target_size = _play_text_ui_font_size
+		elif post_game_phase == "ranking" and _play_text_ui_font != null:
+			# Ranking text does not rely on ASCII-art alignment, so prioritize JP readability.
+			play_target_font = _play_text_ui_font
+			play_target_size = _play_text_ui_font_size
+
+	if play_text != null and play_target_font != null:
+		play_text.add_theme_font_override("normal_font", play_target_font)
+		play_text.add_theme_font_size_override("normal_font_size", play_target_size)
+	if tomb_overlay_text != null and overlay_target_font != null:
+		tomb_overlay_text.add_theme_font_override("normal_font", overlay_target_font)
+		tomb_overlay_text.add_theme_font_size_override("normal_font_size", overlay_target_size)
+
+func _apply_status_line_hunger_color() -> void:
+	if status_line_label == null:
+		return
+
+	var color: Color = _status_line_default_color
+	if moves_left <= FAINT_THRESHOLD:
+		color = Color.from_string(str(COLOR_HEX.get("r", "#ff6b6b")), Color(1.0, 0.42, 0.42, 1.0))
+	elif moves_left <= WEAK_THRESHOLD:
+		color = Color.from_string(str(COLOR_HEX.get("m", "#d78cff")), Color(0.84, 0.55, 1.0, 1.0))
+	elif moves_left <= HUNGRY_THRESHOLD:
+		color = Color.from_string(str(COLOR_HEX.get("y", "#ffd24d")), Color(1.0, 0.82, 0.3, 1.0))
+
+	status_line_label.add_theme_color_override("font_color", color)
+
+func _apply_bottom_tabs_touch_target() -> void:
+	if bottom_tabs == null:
+		return
+
+	bottom_tabs.add_theme_font_size_override("font_size", BOTTOM_TABS_FONT_SIZE)
 	var tab_bar: TabBar = bottom_tabs.get_tab_bar()
 	if tab_bar == null:
 		return
 
-	if symbol_legend_button == null:
-		symbol_legend_button = Button.new()
-		symbol_legend_button.name = "SymbolLegendButton"
-		symbol_legend_button.custom_minimum_size = Vector2(114, 0)
-		symbol_legend_button.focus_mode = Control.FOCUS_NONE
-		symbol_legend_button.add_theme_font_size_override("font_size", 11)
-		tab_bar.add_child(symbol_legend_button)
+	var min_size: Vector2 = tab_bar.custom_minimum_size
+	min_size.y = max(min_size.y, BOTTOM_TABS_TOUCH_MIN_HEIGHT_PX)
+	tab_bar.custom_minimum_size = min_size
+	tab_bar.add_theme_font_size_override("font_size", BOTTOM_TABS_FONT_SIZE)
 
-	if not tab_bar.resized.is_connected(_position_symbol_legend_button):
-		tab_bar.resized.connect(_position_symbol_legend_button)
-	_position_symbol_legend_button()
+	var stylebox_names: PackedStringArray = ["tab_selected", "tab_unselected", "tab_hovered", "tab_disabled"]
+	for stylebox_name in stylebox_names:
+		var stylebox: StyleBox = tab_bar.get_theme_stylebox(stylebox_name)
+		if stylebox is StyleBoxFlat:
+			var copy: StyleBoxFlat = (stylebox as StyleBoxFlat).duplicate()
+			copy.content_margin_left = max(copy.content_margin_left, float(BOTTOM_TABS_H_PADDING_PX))
+			copy.content_margin_right = max(copy.content_margin_right, float(BOTTOM_TABS_H_PADDING_PX))
+			copy.content_margin_top = max(copy.content_margin_top, float(BOTTOM_TABS_V_PADDING_PX))
+			copy.content_margin_bottom = max(copy.content_margin_bottom, float(BOTTOM_TABS_V_PADDING_PX))
+			tab_bar.add_theme_stylebox_override(stylebox_name, copy)
+
+func _setup_symbol_legend_button() -> void:
+	if symbol_legend_button == null:
+		return
+	symbol_legend_button.custom_minimum_size = Vector2(114, 26)
+	symbol_legend_button.focus_mode = Control.FOCUS_NONE
+	symbol_legend_button.remove_theme_font_size_override("font_size")
+
+	# Keep legend list text at normal readable size.
+	if symbol_items_text != null:
+		symbol_items_text.add_theme_font_size_override("normal_font_size", 14)
+	if symbol_monsters_text != null:
+		symbol_monsters_text.add_theme_font_size_override("normal_font_size", 14)
 
 func _position_symbol_legend_button() -> void:
-	if symbol_legend_button == null:
-		return
-
-	var tab_bar: TabBar = bottom_tabs.get_tab_bar()
-	if tab_bar == null:
-		return
-
-	var horizontal_margin: float = 4.0
-	var width: float = max(114.0, symbol_legend_button.get_combined_minimum_size().x)
-	var top: float = 0.0
-	var height: float = 22.0
-	symbol_legend_button.anchor_left = 1.0
-	symbol_legend_button.anchor_top = 0.0
-	symbol_legend_button.anchor_right = 1.0
-	symbol_legend_button.anchor_bottom = 0.0
-	symbol_legend_button.offset_left = -width - horizontal_margin
-	symbol_legend_button.offset_top = top
-	symbol_legend_button.offset_right = -horizontal_margin
-	symbol_legend_button.offset_bottom = top + height
+	# Button is statically positioned in the scene under the minimap overlay.
+	return
 
 func _initialize_rng() -> void:
 	var seed_text: String = OS.get_environment("ROGUE_SEED").strip_edges()
@@ -924,6 +1071,7 @@ func _capture_player_state() -> Dictionary:
 		"death_reason": death_reason,
 		"death_kind": death_kind,
 		"death_monster_name": death_monster_name,
+		"death_monster_char": death_monster_char,
 		"post_game_phase": post_game_phase,
 		"score_recorded": score_recorded,
 		"auto_fight_active": auto_fight_active,
@@ -1101,6 +1249,7 @@ func _apply_loaded_player_state(data: Dictionary) -> void:
 	death_reason = str(data.get("death_reason", ""))
 	death_kind = str(data.get("death_kind", ""))
 	death_monster_name = str(data.get("death_monster_name", ""))
+	death_monster_char = str(data.get("death_monster_char", ""))
 	post_game_phase = str(data.get("post_game_phase", ""))
 	score_recorded = bool(data.get("score_recorded", false))
 	auto_fight_active = bool(data.get("auto_fight_active", false))
@@ -1211,12 +1360,35 @@ func set_debug_logs_enabled(enabled: bool) -> void:
 		_debug_emit("[DEBUG_TOGGLE] enabled")
 
 func _is_japanese_locale() -> bool:
-	var locale: String = TranslationServer.get_locale().to_lower()
-	return locale.begins_with("ja")
+	if preferred_language == "ja":
+		return true
+	if preferred_language == "en":
+		return false
+
+	var language: String = ""
+
+	# Prefer OS locale (Android/iOS/desktop) over TranslationServer locale.
+	if OS.has_method("get_locale_language"):
+		language = String(OS.get_locale_language()).to_lower()
+
+	if language.is_empty():
+		var os_locale: String = String(OS.get_locale()).to_lower()
+		if os_locale.length() >= 2:
+			language = os_locale.substr(0, 2)
+
+	if language.is_empty():
+		var tr_locale: String = String(TranslationServer.get_locale()).to_lower()
+		if tr_locale.length() >= 2:
+			language = tr_locale.substr(0, 2)
+
+	return language == "ja"
 
 func _apply_localized_texts() -> void:
 	_load_localized_ui_texts()
 	_load_localized_messages()
+	_clear_object_display_name_cache()
+	_relocalize_inventory_item_names()
+	_relocalize_hunger_status_text()
 	var is_ja: bool = _is_japanese_locale()
 
 	var controls_tab_index: int = bottom_tabs.get_tab_idx_from_control(controls_tab)
@@ -1233,6 +1405,141 @@ func _apply_localized_texts() -> void:
 	_apply_inventory_action_labels_localized(is_ja)
 	_update_equipment_panel()
 	_apply_popup_labels_localized(is_ja)
+	_update_language_buttons()
+
+func _relocalize_hunger_status_text() -> void:
+	if moves_left <= FAINT_THRESHOLD:
+		hunger_text = _msg(MSG_FAINT, "Faint")
+	elif moves_left <= WEAK_THRESHOLD:
+		hunger_text = _msg(MSG_WEAK, "Weak")
+	elif moves_left <= HUNGRY_THRESHOLD:
+		hunger_text = _msg(MSG_HUNGRY, "Hungry")
+	else:
+		hunger_text = ""
+
+func _clear_object_display_name_cache() -> void:
+	# Object display names are language-dependent cache values.
+	# Clear them so they are rebuilt in the currently selected language.
+	for key in object_data.keys():
+		var info: Variant = object_data.get(key)
+		if info is Dictionary:
+			var dict_info: Dictionary = info
+			if dict_info.has("display_name"):
+				dict_info.erase("display_name")
+				object_data[key] = dict_info
+
+func _relocalize_inventory_item_names() -> void:
+	for i in range(inventory_items.size()):
+		var item: Variant = inventory_items[i]
+		if not (item is Dictionary):
+			continue
+		var entry: Dictionary = item
+		var kind: String = str(entry.get("kind", KIND_ITEM))
+		var which_kind: int = int(entry.get("which_kind", -1))
+
+		entry["unknown_name"] = _localized_unknown_name_for_inventory_item(kind, which_kind)
+		entry["identified_name"] = _localized_identified_name_for_inventory_item(kind, which_kind, str(entry.get("unknown_name", "")))
+
+		# Keep the canonical name in sync with localized identified name.
+		# Display formatting (enchant values, quantity, called-name suffix) is applied later.
+		entry["name"] = str(entry.get("identified_name", ""))
+		inventory_items[i] = entry
+
+func _localized_unknown_name_for_inventory_item(kind: String, which_kind: int) -> String:
+	match kind:
+		KIND_POTION:
+			var color_kind: int = which_kind
+			if which_kind >= 0 and which_kind < potion_color_per_kind.size():
+				color_kind = int(potion_color_per_kind[which_kind])
+			var color_name: String = _word_by_kind(POTION_COLORS_EN, POTION_COLORS_JA, color_kind)
+			return _uif("item.potion.color", "%s potion", [color_name])
+		KIND_SCROLL:
+			return _uif("item.scroll.entitled", "scroll entitled %s", [_scroll_title_for_kind(which_kind)])
+		KIND_WAND:
+			var material_kind: int = which_kind
+			if which_kind >= 0 and which_kind < wand_material_per_kind.size():
+				material_kind = int(wand_material_per_kind[which_kind])
+			var wand_material: String = _word_by_kind(WAND_MATERIALS_EN, WAND_MATERIALS_JA, material_kind)
+			return _uif("item.wand.material", "%s wand", [wand_material])
+		KIND_RING:
+			var gem_kind: int = which_kind
+			if which_kind >= 0 and which_kind < ring_gem_per_kind.size():
+				gem_kind = int(ring_gem_per_kind[which_kind])
+			var ring_gem: String = _word_by_kind(RING_GEMS_EN, RING_GEMS_JA, gem_kind)
+			return _uif("item.ring.gem", "%s ring", [ring_gem])
+		KIND_WEAPON:
+			return _word_by_kind(WEAPON_NAMES_EN, WEAPON_NAMES_JA, which_kind)
+		KIND_ARMOR:
+			return _word_by_kind(ARMOR_NAMES_EN, ARMOR_NAMES_JA, which_kind)
+		KIND_FOOD:
+			return _ui("item.food", "")
+		KIND_AMULET:
+			return _msg(27, "the Amulet of Yendor")
+		_:
+			return _ui("item.unknown", "")
+
+func _localized_identified_name_for_inventory_item(kind: String, which_kind: int, unknown_name: String) -> String:
+	match kind:
+		KIND_SCROLL, KIND_POTION, KIND_WAND, KIND_RING:
+			return _identified_name_for_item(kind, which_kind, _ui("item.unknown", "item"))
+		KIND_FOOD:
+			return _ui("item.food", "food")
+		KIND_AMULET:
+			return _msg(27, "the Amulet of Yendor")
+		KIND_WEAPON, KIND_ARMOR:
+			return unknown_name
+		_:
+			return unknown_name
+
+func _settings_path() -> String:
+	return "user://rogue_settings.cfg"
+
+func _load_language_preference() -> void:
+	preferred_language = ""
+	var cfg := ConfigFile.new()
+	if cfg.load(_settings_path()) != OK:
+		return
+	var lang: String = str(cfg.get_value("ui", "language", "")).to_lower()
+	if lang == "ja" or lang == "en":
+		preferred_language = lang
+
+func _save_language_preference() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("ui", "language", preferred_language)
+	cfg.save(_settings_path())
+
+func _set_preferred_language(lang: String) -> void:
+	var normalized: String = lang.to_lower()
+	if normalized != "ja" and normalized != "en":
+		return
+	if preferred_language == normalized:
+		_update_language_buttons()
+		return
+	preferred_language = normalized
+	_save_language_preference()
+	_apply_localized_texts()
+	_render_play_area()
+
+func _on_language_ja_pressed() -> void:
+	_set_preferred_language("ja")
+
+func _on_language_en_pressed() -> void:
+	_set_preferred_language("en")
+
+func _update_language_buttons() -> void:
+	if lang_ja_button == null or lang_en_button == null:
+		return
+	var is_ja: bool = _is_japanese_locale()
+	if is_ja:
+		lang_ja_button.text = _ui("lang.button.ja.active", "")
+		lang_en_button.text = _ui("lang.button.en.active", "")
+	else:
+		lang_ja_button.text = _ui("lang.button.ja.inactive", "")
+		lang_en_button.text = _ui("lang.button.en.inactive", "")
+	lang_ja_button.button_pressed = is_ja
+	lang_en_button.button_pressed = not is_ja
+	_set_toggle_button_emphasis(lang_ja_button, is_ja)
+	_set_toggle_button_emphasis(lang_en_button, not is_ja)
 
 func _apply_tab_titles_localized(is_ja: bool, controls_tab_index: int, equipment_tab_index: int, inventory_tab_index: int, log_tab_index: int) -> void:
 	bottom_tabs.set_tab_title(controls_tab_index, _ui("tab.controls", "Controls"))
@@ -1369,6 +1676,46 @@ func _build_symbol_monster_legend_text() -> String:
 	table_text += "[/table]"
 	return table_text
 
+func _monster_fallback_name_by_letter(ch: String) -> String:
+	var fallback_monster_names: PackedStringArray = PackedStringArray([
+		"Aquator",
+		"Bat",
+		"Centaur",
+		"Dragon",
+		"Emu",
+		"Venus fly-trap",
+		"Griffin",
+		"Hobgoblin",
+		"Ice monster",
+		"Jabberwock",
+		"Kestrel",
+		"Leprechaun",
+		"Medusa",
+		"Nymph",
+		"Orc",
+		"Phantom",
+		"Quagga",
+		"Rattlesnake",
+		"Snake",
+		"Troll",
+		"Black unicorn",
+		"Vampire",
+		"Wraith",
+		"Xeroc",
+		"Yeti",
+		"Zombie",
+	])
+
+	if ch.length() != 1:
+		return ch
+	if ch[0] < "A" or ch[0] > "Z":
+		return ch
+
+	var idx: int = ch.unicode_at(0) - "A".unicode_at(0)
+	if idx < 0 or idx >= fallback_monster_names.size():
+		return ch
+	return fallback_monster_names[idx]
+
 func _apply_equipment_labels_localized(is_ja: bool) -> void:
 	equipment_header_label.text = _ui("equipment.header", "Current Equipment")
 	weapon_label.text = _ui("equipment.weapon", "Weapon")
@@ -1400,10 +1747,7 @@ func _apply_popup_labels_localized(is_ja: bool) -> void:
 	identify_select_confirm_button.text = _ui("popup.identify_select.confirm", "Identify")
 
 func _update_inventory_header() -> void:
-	if _is_japanese_locale():
-		inventory_header_label.text = _uif("inventory.header", "持ち物 %d / %d", [inventory_count, MAX_PACK_COUNT])
-	else:
-		inventory_header_label.text = _uif("inventory.header", "Inventory %d / %d", [inventory_count, MAX_PACK_COUNT])
+	inventory_header_label.text = _uif("inventory.header", "Inventory %d / %d", [inventory_count, MAX_PACK_COUNT])
 
 	if selected_inventory_index >= 0 and selected_inventory_index < inventory_items.size():
 		inventory_selected_detail_label.text = _inventory_display_name(inventory_items[selected_inventory_index])
@@ -2301,7 +2645,7 @@ func _equipment_slot_button(slot: String) -> Button:
 			return weapon_value_label
 
 func _equipment_none_text() -> String:
-	return _ui("equipment.none", "")
+	return _ui("equipment.none", "None")
 
 func _equipment_slot_display_text(slot: String) -> String:
 	var idx: int = _get_equipped_index_for_slot(slot)
@@ -3638,32 +3982,64 @@ func _on_play_text_resized() -> void:
 	_render_play_area()
 
 func _on_direction_pad_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			_apply_direction_pad_press(event.position)
-	elif event is InputEventScreenTouch:
+	if event is InputEventScreenTouch:
 		if event.pressed:
+			_apply_direction_pad_press(event.position)
+	elif event is InputEventMouseButton:
+		# On mobile, a screen tap can generate both touch and emulated mouse events.
+		# Ignore mouse button events there to avoid duplicate moves.
+		if OS.has_feature("mobile"):
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			_apply_direction_pad_press(event.position)
 
 func _on_play_text_gui_input(event: InputEvent) -> void:
-	if not game_over:
-		return
-	if not (post_game_phase == "tomb" or post_game_phase == "ranking" or post_game_phase == "death_message" or post_game_phase == "win_message"):
-		return
-
-	var should_advance: bool = false
-	if event is InputEventMouseButton:
-		should_advance = event.button_index == MOUSE_BUTTON_LEFT and event.pressed
-	elif event is InputEventScreenTouch:
-		should_advance = event.pressed
-
-	if not should_advance:
-		return
-
-	if _prepare_message_for_new_input():
+	if _try_advance_post_game_from_input(event) or _try_advance_more_message_from_input(event):
 		var vp: Viewport = get_viewport()
 		if vp != null:
 			vp.set_input_as_handled()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _try_advance_post_game_from_input(event) or _try_advance_more_message_from_input(event):
+		get_viewport().set_input_as_handled()
+
+func _is_primary_pointer_press(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		return event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	if event is InputEventScreenTouch:
+		return event.pressed
+	return false
+
+func _accept_message_advance_pointer_input(event: InputEvent) -> bool:
+	if not _is_primary_pointer_press(event):
+		return false
+	var now_msec: int = Time.get_ticks_msec()
+	if now_msec - _last_message_advance_input_msec < 80:
+		return false
+	_last_message_advance_input_msec = now_msec
+	return true
+
+func _try_advance_post_game_from_input(event: InputEvent) -> bool:
+	if not game_over:
+		return false
+	if not (post_game_phase == "tomb" or post_game_phase == "ranking" or post_game_phase == "death_message" or post_game_phase == "win_message"):
+		return false
+
+	if not _accept_message_advance_pointer_input(event):
+		return false
+
+	if _prepare_message_for_new_input():
+		return true
+	return false
+
+func _try_advance_more_message_from_input(event: InputEvent) -> bool:
+	if game_over:
+		return false
+	if message_queue.is_empty():
+		return false
+	if not _accept_message_advance_pointer_input(event):
+		return false
+	return _consume_message_ack_if_needed()
 
 func _apply_direction_pad_press(local_pos: Vector2) -> void:
 	if _prepare_message_for_new_input():
@@ -3677,7 +4053,10 @@ func _apply_direction_pad_press(local_pos: Vector2) -> void:
 	if input_rect.size.x <= 0.0 or input_rect.size.y <= 0.0:
 		return
 
-	if not input_rect.has_point(local_pos):
+	# Keep edge hit tolerance proportional when the pad is scaled.
+	var hit_slop_px: float = DIRECTION_PAD_HIT_SLOP_BASE_PX * (DIRECTION_PAD_SCALE / DIRECTION_PAD_HIT_SLOP_BASE_SCALE)
+	var hit_rect: Rect2 = input_rect.grow(hit_slop_px)
+	if not hit_rect.has_point(local_pos):
 		return
 
 	var tex: Texture2D = direction_pad_image.texture
@@ -5702,7 +6081,7 @@ func _trigger_trap(row: int, col: int) -> void:
 				str_current -= 1
 			_set_message(_msg(MSG_DART_TRAP, "A small dart just hit you in the shoulder"))
 
-func _apply_damage(damage: int, death_cause: String = "", cause_kind: String = "generic", killer_monster: String = "") -> void:
+func _apply_damage(damage: int, death_cause: String = "", cause_kind: String = "generic", killer_monster: String = "", killer_monster_char: String = "") -> void:
 	if invincible_debug_enabled:
 		damage = 0
 	hp_current = max(0, hp_current - max(0, damage))
@@ -5710,6 +6089,7 @@ func _apply_damage(damage: int, death_cause: String = "", cause_kind: String = "
 		hp_current = 0
 		death_kind = cause_kind
 		death_monster_name = killer_monster
+		death_monster_char = killer_monster_char
 		var cause: String = death_cause
 		if cause.is_empty():
 			cause = _ui("death.you_died", "")
@@ -5895,7 +6275,7 @@ func _monster_attack_player(key: String, info: Dictionary) -> void:
 
 	var reduced: int = base_damage - minus
 	if reduced > 0:
-		_apply_damage(reduced, _format_killed_by_monster(monster_name), "monster", monster_name)
+		_apply_damage(reduced, _format_killed_by_monster(monster_name), "monster", monster_name, str(info.get("m_char", "")))
 	if game_over:
 		return
 
@@ -5994,7 +6374,7 @@ func _monster_flame_broil(key: String, info: Dictionary) -> bool:
 	var reduced: int = base_damage - minus
 	_queue_message(_ui("message.flame.scorch", ""))
 	if reduced > 0:
-		_apply_damage(reduced, _format_killed_by_monster(monster_name), "monster", monster_name)
+		_apply_damage(reduced, _format_killed_by_monster(monster_name), "monster", monster_name, str(info.get("m_char", "")))
 	return true
 
 func _monster_seek_gold(key: String, info: Dictionary) -> String:
@@ -6294,7 +6674,10 @@ func _monster_name_for_key(key: String) -> String:
 	var ch: String = str(info.get("m_char", "M"))
 	if ch.length() == 1 and ch[0] >= "A" and ch[0] <= "Z":
 		var idx: int = 307 + (ch.unicode_at(0) - "A".unicode_at(0))
-		return _msg(idx, ch)
+		var resolved: String = _msg(idx, ch)
+		if resolved.strip_edges().is_empty() or resolved == ch:
+			return _monster_fallback_name_by_letter(ch)
+		return resolved
 	return ch
 
 func _check_imitator(key: String) -> bool:
@@ -7370,24 +7753,28 @@ func _room_has_any(idx: int, mask: int) -> bool:
 	return (int(rooms[idx]["is_room"]) & mask) != 0
 
 func _render_play_area() -> void:
+	_apply_play_fonts_for_phase()
 	var viewport_chars := _get_viewport_chars()
-	var map_rows: int = max(1, viewport_chars.y - 2)
+	var map_rows: int = max(1, viewport_chars.y)
 	_keep_player_visible(viewport_chars.x, map_rows)
 	_debug_scroll("render_start")
 	tomb_overlay_text.visible = false
 	tomb_overlay_text.text = ""
+	var line_left_pad_chars: int = _play_line_left_pad_chars()
+	var message_padded_width: int = max(1, viewport_chars.x - line_left_pad_chars)
+	var left_pad: String = " ".repeat(line_left_pad_chars)
+	message_line_label.text = left_pad + _fit_line(_get_message_line_text(), message_padded_width)
+	status_line_label.text = left_pad + _get_status_line()
+	_apply_status_line_hunger_color()
 
 	var lines: PackedStringArray = []
 	var start_row := view_top_row
 	var start_col := view_left_col
 
-	lines.append(_fit_line(_get_message_line_text(), viewport_chars.x))
-
 	if game_over and post_game_phase == "ranking":
 		_hide_minimap()
 		for row_text in _build_ranking_rows(viewport_chars.x, map_rows):
 			lines.append(row_text)
-		lines.append(_fit_line(_get_status_line(), viewport_chars.x))
 		play_text.text = "\n".join(lines)
 		_debug_scroll("render_done")
 		return
@@ -7396,13 +7783,10 @@ func _render_play_area() -> void:
 		_hide_minimap()
 		for row_text in _build_death_tomb_rows(viewport_chars.x, map_rows):
 			lines.append(row_text)
-		lines.append(_fit_line(_get_status_line(), viewport_chars.x))
 		play_text.text = "\n".join(lines)
 		var overlay_lines: PackedStringArray = []
-		overlay_lines.append(_fit_line("", viewport_chars.x))
 		for row_text in _build_death_tomb_overlay_rows(viewport_chars.x, map_rows):
 			overlay_lines.append(row_text)
-		overlay_lines.append(_fit_line("", viewport_chars.x))
 		tomb_overlay_text.text = "\n".join(overlay_lines)
 		tomb_overlay_text.visible = true
 		_debug_scroll("render_done")
@@ -7430,8 +7814,6 @@ func _render_play_area() -> void:
 			row_chars += _apply_char_color(ch)
 		lines.append(row_chars)
 
-	lines.append(_fit_line(_get_status_line(), viewport_chars.x))
-
 	play_text.text = "\n".join(lines)
 	_update_minimap()
 	_debug_scroll("render_done")
@@ -7441,6 +7823,8 @@ func _hide_minimap() -> void:
 		return
 	minimap_frame.visible = false
 	minimap_frame.custom_minimum_size = Vector2.ZERO
+	if minimap_top_row != null:
+		minimap_top_row.visible = false
 	if minimap_marker_border != null:
 		minimap_marker_border.visible = false
 
@@ -7479,6 +7863,8 @@ func _update_minimap() -> void:
 	minimap_frame.custom_minimum_size = Vector2(0.0, target_h + MINIMAP_PADDING_PX * 2.0)
 	minimap_texture_rect.custom_minimum_size = Vector2(target_w, target_h)
 	minimap_frame.visible = true
+	if minimap_top_row != null:
+		minimap_top_row.visible = true
 	_update_minimap_texture()
 	_update_minimap_player_marker()
 
@@ -7669,7 +8055,10 @@ func _monster_name_from_info(info: Dictionary) -> String:
 	var ch: String = str(info.get("m_char", "M"))
 	if ch.length() == 1 and ch[0] >= "A" and ch[0] <= "Z":
 		var idx: int = 307 + (ch.unicode_at(0) - "A".unicode_at(0))
-		return _msg(idx, ch)
+		var resolved: String = _msg(idx, ch)
+		if resolved.strip_edges().is_empty() or resolved == ch:
+			return _monster_fallback_name_by_letter(ch)
+		return resolved
 	return ch
 
 func _release_hold_if_needed() -> void:
@@ -7831,6 +8220,7 @@ func _win_game() -> void:
 	game_won = true
 	death_kind = ""
 	death_monster_name = ""
+	death_monster_char = ""
 	post_game_phase = "win_message"
 	_set_message(_msg(MSG_WIN_1, "Congratulations, you have made it to the light of day!"))
 	_queue_message(_msg(MSG_WIN_2, "You have joined the elite ranks of those who escaped."))
@@ -7853,6 +8243,7 @@ func _end_game(won: bool, reason: String) -> void:
 		_queue_message(_ui("message.invincible.prevented_death", ""))
 		death_kind = ""
 		death_monster_name = ""
+		death_monster_char = ""
 		death_reason = ""
 		return
 
@@ -7862,6 +8253,7 @@ func _end_game(won: bool, reason: String) -> void:
 		if death_kind.is_empty():
 			death_kind = "generic"
 			death_monster_name = ""
+			death_monster_char = ""
 
 	game_over = true
 	game_won = won
@@ -7890,6 +8282,7 @@ func _record_score_once(cause_text: String) -> void:
 		"amulet": has_amulet,
 		"kind": death_kind,
 		"monster": death_monster_name,
+		"monster_char": death_monster_char,
 		"cause": cause_text,
 		"time": Time.get_datetime_string_from_system(),
 	}
@@ -7999,16 +8392,26 @@ func _build_ranking_rows(width: int, map_rows: int) -> PackedStringArray:
 
 	var title: String = _msg(187, "Top  Ten  Scores")
 	var columns: String = _msg(188, "Rank   Score   Name")
+	var score_lines: Array[String] = []
+	for i in range(min(10, leaderboard_cache.size())):
+		var e: Dictionary = leaderboard_cache[i]
+		score_lines.append(_build_score_line(i + 1, e))
+
+	var table_width: int = columns.length()
+	for line in score_lines:
+		table_width = max(table_width, line.length())
+	var table_left: int = max(0, int((width - table_width) / 2))
+	var table_prefix: String = " ".repeat(table_left)
+
 	if map_rows > 2:
 		rows[0] = _center_line(title, width)
-		rows[2] = _fit_line(columns, width)
+		rows[2] = _fit_line(table_prefix + columns, width)
 
 	var line_row: int = 4
-	for i in range(min(10, leaderboard_cache.size())):
+	for i in range(score_lines.size()):
 		if line_row >= map_rows:
 			break
-		var e: Dictionary = leaderboard_cache[i]
-		var score_line: String = _fit_line(_build_score_line(i + 1, e), width)
+		var score_line: String = _fit_line(table_prefix + score_lines[i], width)
 		rows[line_row] = _reverse_highlight_line(score_line) if i == leaderboard_highlight_rank else score_line
 		line_row += 1
 
@@ -8019,6 +8422,16 @@ func _build_ranking_rows(width: int, map_rows: int) -> PackedStringArray:
 
 func _reverse_highlight_line(text: String) -> String:
 	return "[bgcolor=#f2f2f2][color=#101010]%s[/color][/bgcolor]" % text
+
+func _score_monster_name(entry: Dictionary) -> String:
+	var ch: String = str(entry.get("monster_char", ""))
+	if ch.length() == 1 and ch[0] >= "A" and ch[0] <= "Z":
+		var idx: int = 307 + (ch.unicode_at(0) - "A".unicode_at(0))
+		var resolved: String = _msg(idx, ch)
+		if resolved.strip_edges().is_empty() or resolved == ch:
+			return _monster_fallback_name_by_letter(ch)
+		return resolved
+	return str(entry.get("monster", "monster"))
 
 func _format_score_result(entry: Dictionary) -> String:
 	if bool(entry.get("won", false)):
@@ -8036,11 +8449,11 @@ func _format_score_result(entry: Dictionary) -> String:
 		"quit":
 			cause = _msg(195, "quit")
 		"monster":
+			var mname: String = _score_monster_name(entry)
 			if _is_japanese_locale():
-				cause = "%s%s" % [str(entry.get("monster", "")), _msg(197, "と戦いて死す")]
+				cause = "%s%s" % [mname, _msg(197, "と戦いて死す")]
 			else:
 				cause = _msg(197, "killed by ")
-				var mname: String = str(entry.get("monster", "monster"))
 				if _starts_with_vowel(mname):
 					cause += "an "
 				else:
@@ -8104,15 +8517,15 @@ func _build_death_tomb_rows(width: int, map_rows: int) -> PackedStringArray:
 		"|                  |",
 		"|                  |",
 		"|                  |",
-		"*|     *  *  *      | *",
-		"________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______",
+		" *|     *  *  *      | *",
+		" ________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______",
 	]
 
 	var top: int = max(0, int((map_rows - tomb.size()) / 2))
 	for i in range(tomb.size()):
 		var row: int = top + i
 		if row >= 0 and row < rows.size():
-			rows[row] = _center_line(tomb[i], width)
+			rows[row] = _shift_plain_line(_center_line(tomb[i], width), width, TOMB_OUTLINE_COL_SHIFT)
 
 	for i in range(rows.size()):
 		rows[i] = _colorize_tomb_line(rows[i])
@@ -8138,8 +8551,8 @@ func _build_death_tomb_overlay_rows(width: int, map_rows: int) -> PackedStringAr
 		"|                  |",
 		"|                  |",
 		"|                  |",
-		"*|     *  *  *      | *",
-		"________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______",
+		" *|     *  *  *      | *",
+		" ________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______",
 	]
 
 	var base_rows: PackedStringArray = []
@@ -8150,7 +8563,7 @@ func _build_death_tomb_overlay_rows(width: int, map_rows: int) -> PackedStringAr
 	for i in range(tomb.size()):
 		var row: int = top + i
 		if row >= 0 and row < base_rows.size():
-			base_rows[row] = _center_line(tomb[i], width)
+			base_rows[row] = _shift_plain_line(_center_line(tomb[i], width), width, TOMB_OUTLINE_COL_SHIFT)
 
 	var death_lines: PackedStringArray = _death_reason_lines()
 	var au_text: String = ("＄%d" if _is_japanese_locale() else "$%d") % player_gold
@@ -8167,13 +8580,11 @@ func _build_death_tomb_overlay_rows(width: int, map_rows: int) -> PackedStringAr
 	]
 
 	for entry in center_rows:
-		var rr: int = top + int(entry["offset"])
+		var rr: int = top + int(entry["offset"]) + TOMB_OVERLAY_ROW_SHIFT
 		if rr < 0 or rr >= rows.size() or rr >= base_rows.size():
 			continue
-		rows[rr] = _build_tomb_overlay_row(base_rows[rr], str(entry["text"]))
-
-	for i in range(rows.size()):
-		rows[i] = _colorize_overlay_text_line(rows[i])
+		var centered_text: String = _escape_bbcode_text(str(entry["text"]))
+		rows[rr] = "[center][color=#f2f2f2]%s[/color][/center]" % centered_text
 
 	return rows
 
@@ -8244,7 +8655,8 @@ func _overlay_center_text(base: String, text: String) -> String:
 	if clipped_text.length() > best_len:
 		clipped_text = clipped_text.substr(0, best_len)
 
-	var start: int = best_start + int((best_len - clipped_text.length()) / 2)
+	var start: int = best_start + int((best_len - clipped_text.length()) / 2) + TOMB_OVERLAY_COL_SHIFT
+	start = clamp(start, best_start, best_start + max(0, best_len - clipped_text.length()))
 	var end_start: int = start + clipped_text.length()
 	var prefix: String = base.substr(0, start)
 	var suffix: String = ""
@@ -8307,6 +8719,14 @@ func _center_line(text: String, width: int) -> String:
 	var left: int = int((width - trimmed.length()) / 2)
 	return (" ".repeat(max(0, left)) + trimmed).rpad(width, " ")
 
+func _shift_plain_line(text: String, width: int, shift: int) -> String:
+	if width <= 0 or shift == 0:
+		return text
+	if shift > 0:
+		return (" ".repeat(shift) + text).substr(0, width)
+	var cut: int = min(-shift, text.length())
+	return text.substr(cut).rpad(width, " ")
+
 func _fit_line(text: String, width: int) -> String:
 	if width <= 0:
 		return ""
@@ -8318,9 +8738,12 @@ func _fit_line(text: String, width: int) -> String:
 		out += " ".repeat(width - out.length())
 	return out
 
+func _escape_bbcode_text(text: String) -> String:
+	return text.replace("[", "[lb]").replace("]", "[rb]")
+
 func _status_label(index: int, fallback: String) -> String:
-	# Localization strings include trailing spaces; trim so status uses consistent single-space separation.
-	return _msg(index, fallback).strip_edges()
+	# Preserve localized trailing spaces to keep Rogue-like status spacing.
+	return _msg(index, fallback)
 
 func _format_compact_number(value: int) -> String:
 	var abs_value: int = abs(value)
@@ -8337,18 +8760,18 @@ func _get_status_line() -> String:
 	var str_label: String = _status_label(MSG_STR, "Str:")
 	var arm_label: String = _status_label(MSG_ARM, "Arm:")
 	var exp_label: String = _status_label(MSG_EXP, "Exp:")
-
-	var width: int = _get_viewport_chars().x
-	var exp_points_text: String = str(exp_points)
-	var hunger_part: String = ""
+	var hunger_suffix: String = ""
 	if not hunger_text.is_empty():
-		hunger_part = " " + hunger_text
+		hunger_suffix = " " + hunger_text
 
-	var line: String = "%s%d %s%d %s%d(%d) %s%d(%d) %s%d %s%d/%s%s" % [
+	var gold_text: String = str(player_gold)
+	var exp_points_text: String = str(exp_points)
+	var candidates: Array[String] = []
+	candidates.append("%s%-2d %s%-6s %s%-3d(%-3d) %s%-2d(%-2d) %s%-2d %s%-2d/%-7s%s" % [
 		level_label,
 		cur_level,
 		gold_label,
-		player_gold,
+		gold_text,
 		hp_label,
 		hp_current,
 		hp_max,
@@ -8360,31 +8783,95 @@ func _get_status_line() -> String:
 		exp_label,
 		exp_level,
 		exp_points_text,
-		hunger_part,
-	]
+		hunger_suffix,
+	])
 
-	if line.length() > width:
-		exp_points_text = _format_compact_number(exp_points)
-		line = "%s%d %s%d %s%d(%d) %s%d(%d) %s%d %s%d/%s%s" % [
-			level_label,
-			cur_level,
-			gold_label,
-			player_gold,
-			hp_label,
-			hp_current,
-			hp_max,
-			str_label,
-			_effective_strength_current(),
-			_effective_strength_max(),
-			arm_label,
-			armor_class,
-			exp_label,
-			exp_level,
-			exp_points_text,
-			hunger_part,
-		]
+	exp_points_text = _format_compact_number(exp_points)
+	candidates.append("%s%d %s%s %s%d(%d) %s%d(%d) %s%d %s%d/%s%s" % [
+		level_label,
+		cur_level,
+		gold_label,
+		gold_text,
+		hp_label,
+		hp_current,
+		hp_max,
+		str_label,
+		_effective_strength_current(),
+		_effective_strength_max(),
+		arm_label,
+		armor_class,
+		exp_label,
+		exp_level,
+		exp_points_text,
+		hunger_suffix,
+	])
 
-	return line
+	gold_text = _format_compact_number(player_gold)
+	candidates.append("%s%d %s%s %s%d(%d) %s%d(%d) %s%d %s%d/%s%s" % [
+		level_label,
+		cur_level,
+		gold_label,
+		gold_text,
+		hp_label,
+		hp_current,
+		hp_max,
+		str_label,
+		_effective_strength_current(),
+		_effective_strength_max(),
+		arm_label,
+		armor_class,
+		exp_label,
+		exp_level,
+		exp_points_text,
+		hunger_suffix,
+	])
+
+	candidates.append("%s%d %s%d(%d) %s%d(%d) %s%d/%s%s" % [
+		hp_label,
+		hp_current,
+		hp_max,
+		str_label,
+		_effective_strength_current(),
+		_effective_strength_max(),
+		exp_label,
+		exp_level,
+		exp_points_text,
+		hunger_suffix,
+	])
+
+	for candidate in candidates:
+		if _status_line_fits_width(candidate):
+			return candidate
+
+	if not hunger_suffix.is_empty() and _status_line_fits_width(hunger_suffix.strip_edges()):
+		return hunger_suffix.strip_edges()
+
+	return candidates[candidates.size() - 1]
+
+func _status_line_fits_width(text: String) -> bool:
+	var width_px: float = _status_available_width_px()
+	var font: Font = null
+	var font_size: int = 14
+	if status_line_label != null:
+		font = status_line_label.get_theme_font("font")
+		font_size = status_line_label.get_theme_font_size("font_size")
+	if font == null:
+		return true
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= width_px
+
+func _status_available_width_px() -> float:
+	if status_line_label == null:
+		return 4096.0
+	var font: Font = status_line_label.get_theme_font("font")
+	var font_size: int = status_line_label.get_theme_font_size("font_size")
+	var width_px: float = status_line_label.size.x
+	var line_left_pad_chars: int = _play_line_left_pad_chars()
+	if font != null and width_px > 0.0 and line_left_pad_chars > 0:
+		width_px -= font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * float(line_left_pad_chars)
+	return max(8.0, width_px)
+
+func _play_line_left_pad_chars() -> int:
+	return PLAY_LINE_LEFT_PAD_CHARS_MOBILE if OS.has_feature("mobile") else PLAY_LINE_LEFT_PAD_CHARS_DESKTOP
 
 func _get_viewport_chars() -> Vector2i:
 	var font: Font = play_text.get_theme_font("normal_font")

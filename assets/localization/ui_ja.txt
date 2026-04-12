@@ -56,6 +56,11 @@ popup.identify_select.confirm=決定
 
 player.label=君
 
+lang.button.ja.active=日本語
+lang.button.en.active=English
+lang.button.ja.inactive=JA
+lang.button.en.inactive=EN
+
 log.none_recent=直近メッセージはありません。
 
 message.autosave.resumed=自動保存データから再開した。

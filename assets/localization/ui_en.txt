@@ -1,9 +1,9 @@
 # UI text resources (English)
 # format: key=value
 
-tab.controls=Controls
-tab.equipment=Equipment
-tab.inventory=Inventory
+tab.controls=Ctrl
+tab.equipment=Equip
+tab.inventory=Inv
 tab.log=Log
 
 mode.step=STEP
@@ -55,6 +55,11 @@ popup.identify_select.title=What would you like to identify?
 popup.identify_select.confirm=Identify
 
 player.label=you
+
+lang.button.ja.active=日本語
+lang.button.en.active=English
+lang.button.ja.inactive=JA
+lang.button.en.inactive=EN
 
 log.none_recent=No recent messages.
 
