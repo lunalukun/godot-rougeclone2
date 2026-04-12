@@ -73,6 +73,17 @@ rougeclone2 の条件に準拠します。
 - Android 版は GitHub Releases で配布します（APK はリポジトリ本体には含めません）。
 - iOS 版は公開コストがかかるため、当面は公開を予定していません。
 
+## Android 版の要件（現行設定）
+
+- 対応 ABI: arm64-v8a のみ
+- 画面サイズ: small / normal / large / xlarge を有効
+- `min_sdk` / `target_sdk`: `export_presets.cfg` では未指定（Godot 4.6 の Android エクスポートテンプレート既定値に依存）
+
+注意:
+
+- 既定の API レベルは Godot バージョンやテンプレート更新で変わる可能性があります。
+- 公開時は、実際にビルドした APK のマニフェスト情報を確認して Release 本文に API レベルを明記してください。
+
 ## Release 公開時の同梱物
 
 APK を公開する場合、少なくとも次の文書を同時に配布してください（同一 Release に添付）。

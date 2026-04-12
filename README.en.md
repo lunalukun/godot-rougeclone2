@@ -74,6 +74,17 @@ please refer to the included font license documents:
 - Android builds are distributed via GitHub Releases (APK is not stored in the source tree).
 - iOS release is not planned for now due to publishing costs.
 
+## Android Requirements (Current Export Settings)
+
+- Supported ABI: arm64-v8a only
+- Screen size support flags: small / normal / large / xlarge enabled
+- `min_sdk` / `target_sdk`: unset in `export_presets.cfg` (inherits default values from the Godot 4.6 Android export template)
+
+Note:
+
+- The effective API levels may change when Godot or export templates are updated.
+- At release time, verify the actual APK manifest values and state the final API levels in the Release description.
+
 ## Required Files For Release
 
 When publishing an APK, distribute the following documents together in the same Release.
