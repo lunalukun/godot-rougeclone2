@@ -52,6 +52,13 @@ In particular, please satisfy the following conditions (from the upstream COPYIN
 Please also respect the statements in the upstream COPYING file about copyright,
 moral rights, and handling of original notices/comments.
 
+For the bundled third-party fonts (DejaVu Sans Mono / Noto Sans JP),
+please refer to the included font license documents:
+
+- docs/third_party_fonts/DejaVuSansMono-LICENSE.txt
+- docs/third_party_fonts/NotoSansJP-OFL-1.1.txt
+- docs/third_party_fonts/README.md
+
 ## Behavior Policy and Issue Reporting
 
 - The game behavior is implemented to match the original as closely as possible, except for UI-specific parts.
@@ -64,8 +71,22 @@ moral rights, and handling of original notices/comments.
 
 ## Distribution Plan
 
-- Android binary distribution is planned.
+- Android builds are distributed via GitHub Releases (APK is not stored in the source tree).
 - iOS release is not planned for now due to publishing costs.
+
+## Required Files For Release
+
+When publishing an APK, distribute the following documents together in the same Release.
+
+1. LICENSE
+2. docs/third_party_fonts/README.md
+3. docs/third_party_fonts/DejaVuSansMono-LICENSE.txt
+4. docs/third_party_fonts/NotoSansJP-OFL-1.1.txt
+
+Recommended operation:
+
+- Upload `RogueMobile.apk` and a companion `RogueMobile-licenses.zip` that contains the files above.
+- In the Release description, include references to upstream COPYING and this repository's LICENSE.
 
 ## Notes
 
@@ -74,3 +95,4 @@ moral rights, and handling of original notices/comments.
 - For legal interpretation, always check the original text in
   the upstream COPYING file and consult a legal professional if needed.
 - Upstream COPYING: https://github.com/suzukiiichiro/Rogue2.Official/blob/master/COPYING
+- Root license notice: LICENSE

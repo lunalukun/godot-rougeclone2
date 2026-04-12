@@ -21,5 +21,21 @@ Key redistribution conditions (as described in upstream COPYING) include:
 Please also respect upstream statements regarding copyright,
 moral rights, and handling of original notices/comments.
 
+Third-Party Font Notice
+-----------------------
+
+This repository bundles the following third-party fonts:
+
+- assets/fonts/DejaVuSansMono.ttf
+- assets/fonts/NotoSansJP-Regular.otf
+
+License text and source notes are included at:
+
+- docs/third_party_fonts/DejaVuSansMono-LICENSE.txt
+- docs/third_party_fonts/NotoSansJP-OFL-1.1.txt
+- docs/third_party_fonts/README.md
+
+When redistributing this project, keep the above font license files included.
+
 If there is any discrepancy between this notice and upstream COPYING,
 upstream COPYING takes precedence.

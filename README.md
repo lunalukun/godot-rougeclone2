@@ -51,6 +51,13 @@ rougeclone2 の条件に準拠します。
 また、元ドキュメントにある著作権・著作人格権・オリジナル注釈の扱いについても、
 上流 COPYING の記述を尊重してください。
 
+サードパーティフォント（DejaVu Sans Mono / Noto Sans JP）については、
+以下の同梱ライセンス文書を確認してください。
+
+- docs/third_party_fonts/DejaVuSansMono-LICENSE.txt
+- docs/third_party_fonts/NotoSansJP-OFL-1.1.txt
+- docs/third_party_fonts/README.md
+
 ## 動作方針と不具合報告のお願い
 
 - ゲーム動作は、UI部分を除いて原作と同等になるよう実装しています。
@@ -63,11 +70,26 @@ rougeclone2 の条件に準拠します。
 
 ## 配布方針
 
-- Android バイナリの配布は予定しています。
+- Android 版は GitHub Releases で配布します（APK はリポジトリ本体には含めません）。
 - iOS 版は公開コストがかかるため、当面は公開を予定していません。
+
+## Release 公開時の同梱物
+
+APK を公開する場合、少なくとも次の文書を同時に配布してください（同一 Release に添付）。
+
+1. LICENSE
+2. docs/third_party_fonts/README.md
+3. docs/third_party_fonts/DejaVuSansMono-LICENSE.txt
+4. docs/third_party_fonts/NotoSansJP-OFL-1.1.txt
+
+推奨運用:
+
+- `RogueMobile.apk` に加えて、上記ライセンス文書を含む `RogueMobile-licenses.zip` を同一 Release に添付する。
+- Release 本文に upstream COPYING と本リポジトリ LICENSE への参照を明記する。
 
 ## 注意
 
 - 本 README は、上流 COPYING の内容を参照しやすくまとめたものです。
 - 法的な最終判断は、必ず上流 COPYING 原文および必要に応じて専門家確認を行ってください。
 - 上流 COPYING: https://github.com/suzukiiichiro/Rogue2.Official/blob/master/COPYING
+- ルートライセンス通知: LICENSE
