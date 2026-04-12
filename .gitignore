@@ -2,3 +2,7 @@
 .import/
 export_presets.cfg
 *.translation
+
+# Android export artifacts
+*.apk
+*.idsig
