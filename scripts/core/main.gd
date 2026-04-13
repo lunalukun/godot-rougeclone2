@@ -8882,7 +8882,7 @@ func _get_status_line() -> String:
 		hunger_suffix,
 	])
 
-	candidates.append("%s%d %s%d(%d) %s%d(%d) %s%d/%s%s" % [
+	candidates.append("%s%d(%d) %s%d(%d) %s%d/%s%s" % [
 		hp_label,
 		hp_current,
 		hp_max,
