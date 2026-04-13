@@ -576,6 +576,7 @@ var _rng_seed_override: String = ""
 var auto_pickup_non_gold_enabled: bool = true
 var _status_line_default_color: Color = Color(0.95, 0.95, 0.95, 1.0)
 var _last_message_advance_input_msec: int = -1000
+var _last_message_line_len: int = 0
 var _play_text_mono_font: Font = null
 var _play_text_mono_font_size: int = 14
 var _play_text_ui_font: Font = null
@@ -648,6 +649,10 @@ func _ready() -> void:
 	_apply_direction_pad_ui_scale()
 	_capture_status_line_default_color()
 	_capture_play_fonts()
+	if message_line_label != null:
+		message_line_label.clip_text = true
+	if status_line_label != null:
+		status_line_label.clip_text = true
 	play_text.bbcode_enabled = true
 	tomb_overlay_text.bbcode_enabled = true
 	tomb_overlay_text.visible = false
@@ -856,7 +861,16 @@ func _auto_play_font_scale() -> float:
 	# Keep desktop rendering unchanged; this targets mobile readability only.
 	if not _is_mobile_runtime():
 		return 1.0
-	if status_line_label == null or _play_text_ui_font == null or status_line_label.size.x <= 1.0:
+	if status_line_label == null or _play_text_ui_font == null:
+		return 1.0
+
+	var width_limit: float = status_line_label.size.x
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		var visible_w: float = viewport.get_visible_rect().size.x
+		if visible_w > 1.0:
+			width_limit = min(width_limit, visible_w)
+	if width_limit <= 1.0:
 		return 1.0
 
 	var status_base_size: int = max(1, _status_line_ui_font_size)
@@ -866,7 +880,7 @@ func _auto_play_font_scale() -> float:
 	if status_width <= 0.0:
 		return 1.0
 
-	var scale: float = status_line_label.size.x / status_width
+	var scale: float = width_limit / status_width
 	return clamp(scale, 1.0, AUTO_PLAY_FONT_SCALE_MAX)
 
 func _apply_play_fonts_for_phase() -> void:
@@ -890,10 +904,26 @@ func _apply_play_fonts_for_phase() -> void:
 			play_target_font = _play_text_ui_font
 			play_target_size = _play_text_ui_font_size
 
-	play_target_size = max(1, int(round(float(play_target_size) * auto_scale)))
-	overlay_target_size = max(1, int(round(float(overlay_target_size) * auto_scale)))
+	# Keep map/tomb font metrics unchanged; scale only status/message UI lines.
 	var message_line_target_size: int = max(1, int(round(float(_message_line_ui_font_size) * auto_scale)))
 	var status_line_target_size: int = max(1, int(round(float(_status_line_ui_font_size) * auto_scale)))
+
+	# Guarantee that the status text fits by reducing only UI line font sizes when needed.
+	if _is_mobile_runtime() and status_line_label != null and _play_text_ui_font != null:
+		var status_width_limit: float = status_line_label.size.x
+		var viewport: Viewport = get_viewport()
+		if viewport != null:
+			var visible_w: float = viewport.get_visible_rect().size.x
+			if visible_w > 1.0:
+				status_width_limit = min(status_width_limit, visible_w)
+		if status_width_limit > 1.0:
+			var left_pad: String = " ".repeat(_play_line_left_pad_chars())
+			var status_text: String = left_pad + _get_status_line()
+			while status_line_target_size > 1:
+				var w: float = _play_text_ui_font.get_string_size(status_text, HORIZONTAL_ALIGNMENT_LEFT, -1, status_line_target_size).x
+				if w <= status_width_limit:
+					break
+				status_line_target_size -= 1
 
 	if play_text != null and play_target_font != null:
 		play_text.add_theme_font_override("normal_font", play_target_font)
@@ -7817,9 +7847,13 @@ func _render_play_area() -> void:
 	tomb_overlay_text.visible = false
 	tomb_overlay_text.text = ""
 	var line_left_pad_chars: int = _play_line_left_pad_chars()
-	var message_padded_width: int = max(1, viewport_chars.x - line_left_pad_chars)
 	var left_pad: String = " ".repeat(line_left_pad_chars)
-	message_line_label.text = left_pad + _fit_line(_get_message_line_text(), message_padded_width)
+	var message_width_px: float = _label_available_width_px(message_line_label, line_left_pad_chars)
+	var fitted_message: String = _fit_line_px(_get_message_line_text(), message_width_px, message_line_label)
+	if fitted_message.length() < _last_message_line_len:
+		fitted_message += " ".repeat(_last_message_line_len - fitted_message.length())
+	_last_message_line_len = fitted_message.length()
+	message_line_label.text = left_pad + fitted_message
 	status_line_label.text = left_pad + _get_status_line()
 	_apply_status_line_hunger_color()
 
@@ -8793,6 +8827,31 @@ func _fit_line(text: String, width: int) -> String:
 	elif out.length() < width:
 		out += " ".repeat(width - out.length())
 	return out
+
+func _fit_line_px(text: String, width_px: float, label: Label) -> String:
+	if width_px <= 0.0:
+		return ""
+	if label == null:
+		return text
+	var font: Font = label.get_theme_font("font")
+	var font_size: int = label.get_theme_font_size("font_size")
+	if font == null:
+		return text
+
+	var out: String = text
+	while not out.is_empty() and font.get_string_size(out, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width_px:
+		out = out.substr(0, out.length() - 1)
+	return out
+
+func _label_available_width_px(label: Label, line_left_pad_chars: int) -> float:
+	if label == null:
+		return 4096.0
+	var font: Font = label.get_theme_font("font")
+	var font_size: int = label.get_theme_font_size("font_size")
+	var width_px: float = label.size.x
+	if font != null and width_px > 0.0 and line_left_pad_chars > 0:
+		width_px -= font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x * float(line_left_pad_chars)
+	return max(8.0, width_px)
 
 func _escape_bbcode_text(text: String) -> String:
 	return text.replace("[", "[lb]").replace("]", "[rb]")
