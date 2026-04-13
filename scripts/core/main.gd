@@ -627,6 +627,7 @@ const DIRECTION_PAD_SCALE: float = 1.5
 const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
 const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
 const AUTO_PLAY_FONT_SCALE_MAX: float = 1.8
+const MESSAGE_LINE_MIN_FONT_SIZE_MOBILE: int = 16
 
 var _called_name_counter: int = 1
 var _loaded_from_autosave: bool = false
@@ -876,11 +877,44 @@ func _auto_play_font_scale() -> float:
 	var status_base_size: int = max(1, _status_line_ui_font_size)
 	var left_pad: String = " ".repeat(_play_line_left_pad_chars())
 	var status_text: String = left_pad + _get_status_line()
+	if status_text.strip_edges().is_empty():
+		status_text = left_pad + _primary_status_line_text()
 	var status_width: float = _play_text_ui_font.get_string_size(status_text, HORIZONTAL_ALIGNMENT_LEFT, -1, status_base_size).x
 	if status_width <= 0.0:
 		return 1.0
 
 	var scale: float = width_limit / status_width
+	return clamp(scale, 1.0, AUTO_PLAY_FONT_SCALE_MAX)
+
+func _auto_message_font_scale() -> float:
+	if not _is_mobile_runtime():
+		return 1.0
+	if message_line_label == null:
+		return 1.0
+
+	var font: Font = message_line_label.get_theme_font("font")
+	if font == null:
+		return 1.0
+
+	var width_limit: float = _label_available_width_px(message_line_label, _play_line_left_pad_chars())
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		var visible_w: float = viewport.get_visible_rect().size.x
+		if visible_w > 1.0:
+			width_limit = min(width_limit, visible_w)
+	if width_limit <= 1.0:
+		return 1.0
+
+	var base_size: int = max(1, _message_line_ui_font_size)
+	var msg_text: String = _get_message_line_text()
+	if msg_text.is_empty():
+		return 1.0
+
+	var msg_width: float = font.get_string_size(msg_text, HORIZONTAL_ALIGNMENT_LEFT, -1, base_size).x
+	if msg_width <= 0.0:
+		return 1.0
+
+	var scale: float = width_limit / msg_width
 	return clamp(scale, 1.0, AUTO_PLAY_FONT_SCALE_MAX)
 
 func _apply_play_fonts_for_phase() -> void:
@@ -905,8 +939,11 @@ func _apply_play_fonts_for_phase() -> void:
 			play_target_size = _play_text_ui_font_size
 
 	# Keep map/tomb font metrics unchanged; scale only status/message UI lines.
-	var message_line_target_size: int = max(1, int(round(float(_message_line_ui_font_size) * auto_scale)))
+	var message_scale: float = _auto_message_font_scale()
+	var message_line_target_size: int = max(1, int(round(float(_message_line_ui_font_size) * message_scale)))
 	var status_line_target_size: int = max(1, int(round(float(_status_line_ui_font_size) * auto_scale)))
+	if _is_mobile_runtime():
+		message_line_target_size = max(message_line_target_size, MESSAGE_LINE_MIN_FONT_SIZE_MOBILE)
 
 	# Guarantee that the status text fits by reducing only UI line font sizes when needed.
 	if _is_mobile_runtime() and status_line_label != null and _play_text_ui_font != null:
@@ -918,7 +955,7 @@ func _apply_play_fonts_for_phase() -> void:
 				status_width_limit = min(status_width_limit, visible_w)
 		if status_width_limit > 1.0:
 			var left_pad: String = " ".repeat(_play_line_left_pad_chars())
-			var status_text: String = left_pad + _get_status_line()
+			var status_text: String = left_pad + _primary_status_line_text()
 			while status_line_target_size > 1:
 				var w: float = _play_text_ui_font.get_string_size(status_text, HORIZONTAL_ALIGNMENT_LEFT, -1, status_line_target_size).x
 				if w <= status_width_limit:
@@ -8860,15 +8897,7 @@ func _status_label(index: int, fallback: String) -> String:
 	# Preserve localized trailing spaces to keep Rogue-like status spacing.
 	return _msg(index, fallback)
 
-func _format_compact_number(value: int) -> String:
-	var abs_value: int = abs(value)
-	if abs_value >= 1000000:
-		return "%dm" % int(value / 1000000)
-	if abs_value >= 1000:
-		return "%dk" % int(value / 1000)
-	return str(value)
-
-func _get_status_line() -> String:
+func _primary_status_line_text(include_hunger: bool = true) -> String:
 	var level_label: String = _status_label(MSG_LEVEL, "Level:")
 	var gold_label: String = _status_label(MSG_GOLD, "Gold:")
 	var hp_label: String = _status_label(MSG_HP, "Hp:")
@@ -8876,13 +8905,12 @@ func _get_status_line() -> String:
 	var arm_label: String = _status_label(MSG_ARM, "Arm:")
 	var exp_label: String = _status_label(MSG_EXP, "Exp:")
 	var hunger_suffix: String = ""
-	if not hunger_text.is_empty():
+	if include_hunger and not hunger_text.is_empty():
 		hunger_suffix = " " + hunger_text
 
 	var gold_text: String = str(player_gold)
 	var exp_points_text: String = str(exp_points)
-	var candidates: Array[String] = []
-	candidates.append("%s%-2d %s%-6s %s%-3d(%-3d) %s%-2d(%-2d) %s%-2d %s%-2d/%-7s%s" % [
+	return "%s%-2d %s%-6s %s%-3d(%-3d) %s%-2d(%-2d) %s%-2d %s%-2d/%-7s%s" % [
 		level_label,
 		cur_level,
 		gold_label,
@@ -8899,7 +8927,34 @@ func _get_status_line() -> String:
 		exp_level,
 		exp_points_text,
 		hunger_suffix,
-	])
+	]
+
+func _format_compact_number(value: int) -> String:
+	var abs_value: int = abs(value)
+	if abs_value >= 1000000:
+		return "%dm" % int(value / 1000000)
+	if abs_value >= 1000:
+		return "%dk" % int(value / 1000)
+	return str(value)
+
+func _get_status_line() -> String:
+	if _is_mobile_runtime():
+		return _primary_status_line_text()
+
+	var level_label: String = _status_label(MSG_LEVEL, "Level:")
+	var gold_label: String = _status_label(MSG_GOLD, "Gold:")
+	var hp_label: String = _status_label(MSG_HP, "Hp:")
+	var str_label: String = _status_label(MSG_STR, "Str:")
+	var arm_label: String = _status_label(MSG_ARM, "Arm:")
+	var exp_label: String = _status_label(MSG_EXP, "Exp:")
+	var hunger_suffix: String = ""
+	if not hunger_text.is_empty():
+		hunger_suffix = " " + hunger_text
+
+	var gold_text: String = str(player_gold)
+	var exp_points_text: String = str(exp_points)
+	var candidates: Array[String] = []
+	candidates.append(_primary_status_line_text())
 
 	exp_points_text = _format_compact_number(exp_points)
 	candidates.append("%s%d %s%s %s%d(%d) %s%d(%d) %s%d %s%d/%s%s" % [
