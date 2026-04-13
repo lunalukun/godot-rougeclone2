@@ -6094,7 +6094,7 @@ func _pickup_current_tile_object() -> int:
 		player_gold += int(info.get("amount", 0))
 		_set_message(item_name)
 	else:
-		if _pack_count_with_candidate(info) >= MAX_PACK_COUNT:
+		if _pack_count_with_candidate(info) > MAX_PACK_COUNT:
 			_set_message(_msg(MSG_PACK_FULL, "Your pack is full."))
 			return PICKUP_RESULT_FAILED
 		info["picked_up"] = true
