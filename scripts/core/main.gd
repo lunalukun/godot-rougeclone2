@@ -3340,6 +3340,8 @@ func _open_identify_select_popup(source_index: int) -> bool:
 	identify_select_list.clear()
 
 	for i in range(inventory_items.size()):
+		if source_index >= 0 and i == source_index:
+			continue
 		identify_select_item_indexes.append(i)
 		identify_select_list.add_item(_inventory_display_name(inventory_items[i]))
 
@@ -3358,8 +3360,6 @@ func _close_identify_select_popup() -> void:
 	identify_scroll_source_index = -1
 
 func _consume_identify_scroll_and_finish() -> void:
-	if identify_scroll_source_index >= 0 and identify_scroll_source_index < inventory_items.size():
-		_remove_inventory_item_at(identify_scroll_source_index)
 	_advance_turn(1)
 	_render_play_area()
 	_close_identify_select_popup()
@@ -3752,8 +3752,8 @@ func _use_scroll_effect(scroll_index: int) -> bool:
 				_set_message(_msg(MSG_SCROLL_NO_ARMOR, "Your skin crawls"))
 		SCROLL_IDENTIFY:
 			_set_message(_msg(MSG_SCROLL_IDENTIFY, "This is a scroll of identify"))
-			if not _open_identify_select_popup(scroll_index):
-				_remove_inventory_item_at(scroll_index)
+			_consume_inventory_item_at(scroll_index, 1)
+			if not _open_identify_select_popup(-1):
 				_advance_turn(1)
 			return false
 		SCROLL_TELEPORT:
