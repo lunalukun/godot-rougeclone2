@@ -7120,15 +7120,21 @@ func _advance_turn(cost: int) -> void:
 			return
 
 func _process_hunger_status_before_decrement() -> bool:
-	if moves_left == HUNGRY_THRESHOLD:
-		hunger_text = _msg(MSG_HUNGRY, "Hungry")
-		_queue_message(_msg(72, "Hungry"))
-	elif moves_left == WEAK_THRESHOLD:
-		hunger_text = _msg(MSG_WEAK, "Weak")
-		_queue_message(_msg(74, "Weak"))
+	var hungry_label: String = _msg(MSG_HUNGRY, "Hungry")
+	var weak_label: String = _msg(MSG_WEAK, "Weak")
+	var faint_label: String = _msg(MSG_FAINT, "Faint")
+
+	if moves_left <= HUNGRY_THRESHOLD and moves_left > WEAK_THRESHOLD:
+		if hunger_text != hungry_label:
+			hunger_text = hungry_label
+			_queue_message(_msg(72, "Hungry"))
+	elif moves_left <= WEAK_THRESHOLD and moves_left > FAINT_THRESHOLD:
+		if hunger_text != weak_label:
+			hunger_text = weak_label
+			_queue_message(_msg(74, "Weak"))
 	elif moves_left <= FAINT_THRESHOLD:
-		if moves_left == FAINT_THRESHOLD:
-			hunger_text = _msg(MSG_FAINT, "Faint")
+		if hunger_text != faint_label:
+			hunger_text = faint_label
 			_queue_message(_msg(MSG_FAINT_START, "You feel very weak. You can barely move."))
 		var faint_roll: int = _get_rand(0, max(0, FAINT_THRESHOLD - moves_left))
 		if faint_roll > 0:
