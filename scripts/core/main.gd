@@ -580,6 +580,8 @@ var _play_text_mono_font: Font = null
 var _play_text_mono_font_size: int = 14
 var _play_text_ui_font: Font = null
 var _play_text_ui_font_size: int = 14
+var _message_line_ui_font_size: int = 14
+var _status_line_ui_font_size: int = 14
 
 const COLOR_THEME: String = "cbmyg"
 const COLOR_HEX: Dictionary = {
@@ -623,6 +625,7 @@ const DIRECTION_PAD_BASE_SIZE_PX: float = 156.0
 const DIRECTION_PAD_SCALE: float = 1.5
 const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
 const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
+const AUTO_PLAY_FONT_SCALE_MAX: float = 1.8
 
 var _called_name_counter: int = 1
 var _loaded_from_autosave: bool = false
@@ -836,15 +839,42 @@ func _capture_play_fonts() -> void:
 	if play_text != null:
 		_play_text_mono_font = play_text.get_theme_font("normal_font")
 		_play_text_mono_font_size = play_text.get_theme_font_size("normal_font_size")
+	if message_line_label != null:
+		_message_line_ui_font_size = message_line_label.get_theme_font_size("font_size")
 	if status_line_label != null:
 		_play_text_ui_font = status_line_label.get_theme_font("font")
 		_play_text_ui_font_size = status_line_label.get_theme_font_size("font_size")
+		_status_line_ui_font_size = _play_text_ui_font_size
+
+func _is_mobile_runtime() -> bool:
+	if OS.has_feature("mobile"):
+		return true
+	var os_name: String = OS.get_name()
+	return os_name == "Android" or os_name == "iOS"
+
+func _auto_play_font_scale() -> float:
+	# Keep desktop rendering unchanged; this targets mobile readability only.
+	if not _is_mobile_runtime():
+		return 1.0
+	if status_line_label == null or _play_text_ui_font == null or status_line_label.size.x <= 1.0:
+		return 1.0
+
+	var status_base_size: int = max(1, _status_line_ui_font_size)
+	var left_pad: String = " ".repeat(_play_line_left_pad_chars())
+	var status_text: String = left_pad + _get_status_line()
+	var status_width: float = _play_text_ui_font.get_string_size(status_text, HORIZONTAL_ALIGNMENT_LEFT, -1, status_base_size).x
+	if status_width <= 0.0:
+		return 1.0
+
+	var scale: float = status_line_label.size.x / status_width
+	return clamp(scale, 1.0, AUTO_PLAY_FONT_SCALE_MAX)
 
 func _apply_play_fonts_for_phase() -> void:
 	var play_target_font: Font = _play_text_mono_font
 	var play_target_size: int = _play_text_mono_font_size
 	var overlay_target_font: Font = _play_text_mono_font
 	var overlay_target_size: int = _play_text_mono_font_size
+	var auto_scale: float = _auto_play_font_scale()
 
 	if game_over:
 		# Map rows are still rendered in death/win message phases, so keep PlayText monospaced.
@@ -860,12 +890,21 @@ func _apply_play_fonts_for_phase() -> void:
 			play_target_font = _play_text_ui_font
 			play_target_size = _play_text_ui_font_size
 
+	play_target_size = max(1, int(round(float(play_target_size) * auto_scale)))
+	overlay_target_size = max(1, int(round(float(overlay_target_size) * auto_scale)))
+	var message_line_target_size: int = max(1, int(round(float(_message_line_ui_font_size) * auto_scale)))
+	var status_line_target_size: int = max(1, int(round(float(_status_line_ui_font_size) * auto_scale)))
+
 	if play_text != null and play_target_font != null:
 		play_text.add_theme_font_override("normal_font", play_target_font)
 		play_text.add_theme_font_size_override("normal_font_size", play_target_size)
 	if tomb_overlay_text != null and overlay_target_font != null:
 		tomb_overlay_text.add_theme_font_override("normal_font", overlay_target_font)
 		tomb_overlay_text.add_theme_font_size_override("normal_font_size", overlay_target_size)
+	if message_line_label != null:
+		message_line_label.add_theme_font_size_override("font_size", message_line_target_size)
+	if status_line_label != null:
+		status_line_label.add_theme_font_size_override("font_size", status_line_target_size)
 
 func _apply_status_line_hunger_color() -> void:
 	if status_line_label == null:
