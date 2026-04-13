@@ -2062,7 +2062,7 @@ func _inventory_display_name(item: Dictionary) -> String:
 				_set_called_name_for_kind(kind, which_kind, call_name)
 		if not call_name.is_empty():
 			var unknown_name: String = str(item.get("unknown_name", _ui("item.unknown", "item")))
-			return _name_with_quantity(_uif("item.called_format", "%s called %s", [unknown_name, call_name]), quantity)
+			return _name_with_quantity(_uif("item.called_format", "%s - %s", [call_name, unknown_name]), quantity)
 		return _name_with_quantity(str(item.get("unknown_name", _ui("item.unknown", "item"))), quantity)
 
 	if kind == KIND_ARMOR and id_status == ID_IDENTIFIED:
