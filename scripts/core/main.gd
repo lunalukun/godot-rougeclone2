@@ -580,8 +580,6 @@ var _play_text_mono_font: Font = null
 var _play_text_mono_font_size: int = 14
 var _play_text_ui_font: Font = null
 var _play_text_ui_font_size: int = 14
-var _message_line_ui_font_size: int = 14
-var _status_line_ui_font_size: int = 14
 
 const COLOR_THEME: String = "cbmyg"
 const COLOR_HEX: Dictionary = {
@@ -625,7 +623,6 @@ const DIRECTION_PAD_BASE_SIZE_PX: float = 156.0
 const DIRECTION_PAD_SCALE: float = 1.5
 const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
 const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
-const AUTO_PLAY_FONT_SCALE_MAX: float = 1.8
 
 var _called_name_counter: int = 1
 var _loaded_from_autosave: bool = false
@@ -839,38 +836,15 @@ func _capture_play_fonts() -> void:
 	if play_text != null:
 		_play_text_mono_font = play_text.get_theme_font("normal_font")
 		_play_text_mono_font_size = play_text.get_theme_font_size("normal_font_size")
-	if message_line_label != null:
-		_message_line_ui_font_size = message_line_label.get_theme_font_size("font_size")
 	if status_line_label != null:
 		_play_text_ui_font = status_line_label.get_theme_font("font")
 		_play_text_ui_font_size = status_line_label.get_theme_font_size("font_size")
-		_status_line_ui_font_size = _play_text_ui_font_size
-
-func _auto_play_font_scale() -> float:
-	# Keep desktop rendering unchanged; this targets mobile readability only.
-	if not OS.has_feature("mobile"):
-		return 1.0
-	if play_text == null or _play_text_mono_font == null:
-		return 1.0
-
-	var base_size: int = max(1, _play_text_mono_font_size)
-	var char_width: float = _play_text_mono_font.get_string_size("W", HORIZONTAL_ALIGNMENT_LEFT, -1, base_size).x
-	if char_width <= 0.0 or play_text.size.x <= 0.0:
-		return 1.0
-
-	var raw_cols: float = play_text.size.x / char_width
-	if raw_cols <= float(ROGUE_COLUMNS):
-		return 1.0
-
-	var scale: float = raw_cols / float(ROGUE_COLUMNS)
-	return clamp(scale, 1.0, AUTO_PLAY_FONT_SCALE_MAX)
 
 func _apply_play_fonts_for_phase() -> void:
 	var play_target_font: Font = _play_text_mono_font
 	var play_target_size: int = _play_text_mono_font_size
 	var overlay_target_font: Font = _play_text_mono_font
 	var overlay_target_size: int = _play_text_mono_font_size
-	var auto_scale: float = _auto_play_font_scale()
 
 	if game_over:
 		# Map rows are still rendered in death/win message phases, so keep PlayText monospaced.
@@ -886,21 +860,12 @@ func _apply_play_fonts_for_phase() -> void:
 			play_target_font = _play_text_ui_font
 			play_target_size = _play_text_ui_font_size
 
-	play_target_size = max(1, int(round(float(play_target_size) * auto_scale)))
-	overlay_target_size = max(1, int(round(float(overlay_target_size) * auto_scale)))
-	var message_line_target_size: int = max(1, int(round(float(_message_line_ui_font_size) * auto_scale)))
-	var status_line_target_size: int = max(1, int(round(float(_status_line_ui_font_size) * auto_scale)))
-
 	if play_text != null and play_target_font != null:
 		play_text.add_theme_font_override("normal_font", play_target_font)
 		play_text.add_theme_font_size_override("normal_font_size", play_target_size)
 	if tomb_overlay_text != null and overlay_target_font != null:
 		tomb_overlay_text.add_theme_font_override("normal_font", overlay_target_font)
 		tomb_overlay_text.add_theme_font_size_override("normal_font_size", overlay_target_size)
-	if message_line_label != null:
-		message_line_label.add_theme_font_size_override("font_size", message_line_target_size)
-	if status_line_label != null:
-		status_line_label.add_theme_font_size_override("font_size", status_line_target_size)
 
 func _apply_status_line_hunger_color() -> void:
 	if status_line_label == null:
@@ -2096,8 +2061,10 @@ func _inventory_display_name(item: Dictionary) -> String:
 			if not call_name.is_empty():
 				_set_called_name_for_kind(kind, which_kind, call_name)
 		if not call_name.is_empty():
-			var unknown_name: String = str(item.get("unknown_name", _ui("item.unknown", "item")))
-			return _name_with_quantity(_uif("item.called_format", "%s - %s", [call_name, unknown_name]), quantity)
+			var kind_name: String = _called_item_kind_name(kind)
+			if _is_japanese_locale():
+				return _name_with_quantity(_uif("item.called_format", "%sと呼ぶ%s", [call_name, kind_name]), quantity)
+			return _name_with_quantity(_uif("item.called_format", "%s - %s", [call_name, kind_name]), quantity)
 		return _name_with_quantity(str(item.get("unknown_name", _ui("item.unknown", "item"))), quantity)
 
 	if kind == KIND_ARMOR and id_status == ID_IDENTIFIED:
@@ -2107,6 +2074,19 @@ func _inventory_display_name(item: Dictionary) -> String:
 		return _name_with_quantity(_weapon_identified_display_name(item), quantity)
 
 	return _name_with_quantity(str(item.get("name", _ui("item.unknown", "item"))), quantity)
+
+func _called_item_kind_name(kind: String) -> String:
+	match kind:
+		KIND_SCROLL:
+			return _ui("item.scroll.generic", "巻物")
+		KIND_POTION:
+			return _ui("item.potion.generic", "薬")
+		KIND_WAND:
+			return _ui("item.wand.generic", "杖")
+		KIND_RING:
+			return _ui("item.ring.generic", "指輪")
+		_:
+			return _ui("item.generic", "アイテム")
 
 func _armor_identified_display_name(item: Dictionary) -> String:
 	var base_name: String = str(item.get("identified_name", item.get("name", _ui("slot.armor", "armor"))))
