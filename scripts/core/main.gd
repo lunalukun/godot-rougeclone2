@@ -2957,6 +2957,8 @@ func _on_equip_select_confirm_pressed() -> void:
 	if equip_select_target_slot.is_empty():
 		_close_equip_select_popup()
 		return
+	# Equipment change feedback should appear immediately even if another message is pending.
+	_clear_pending_messages_for_equipment_feedback()
 
 	var target_slot: String = equip_select_target_slot
 	var candidate_indexes: Array[int] = equip_select_item_indexes.duplicate()
@@ -7416,6 +7418,12 @@ func _prepare_message_for_new_input() -> bool:
 
 	action_interrupted = false
 	return game_over
+
+func _clear_pending_messages_for_equipment_feedback() -> void:
+	if top_message.is_empty() and message_queue.is_empty():
+		return
+	top_message = ""
+	message_queue.clear()
 
 func _get_message_line_text() -> String:
 	if message_queue.is_empty():
