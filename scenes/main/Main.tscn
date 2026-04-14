@@ -140,6 +140,13 @@ text = "EN"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Invincible" type="Button" parent="RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow"]
+layout_mode = 2
+toggle_mode = true
+custom_minimum_size = Vector2(98, 26)
+focus_mode = 0
+text = "Invincible"
+
 [node name="MiniMapSymbolsButton" type="Button" parent="RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow"]
 layout_mode = 2
 custom_minimum_size = Vector2(114, 26)
@@ -222,6 +229,21 @@ texture = ExtResource("3_control_texture")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="StairsCenterButton" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/DirectionPadImage"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -38.0
+offset_top = -20.0
+offset_right = 38.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Down"
+
 [node name="BottomTabs" type="TabContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -229,33 +251,35 @@ size_flags_vertical = 3
 
 [node name="ControlsTab" type="MarginContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
 tab_title = "Controls"
 
 [node name="ControlsTabVBox" type="VBoxContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 2
 
 [node name="ControlsMainRow" type="HBoxContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="ControlsRightVBox" type="VBoxContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 0
 
 [node name="MoveModeRow" type="HBoxContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 0
 theme_override_constants/separation = 6
 
 [node name="StepMode" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/MoveModeRow"]
@@ -283,137 +307,157 @@ text = "RUN BEFORE"
 [node name="ActionGrid" type="GridContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-columns = 4
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
+size_flags_vertical = 3
+columns = 3
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 
 [node name="Throw" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Throw"
 
 [node name="Zap" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Zap"
 
 [node name="Search10" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Search x10"
 
 [node name="Pickup" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Pickup"
 
 [node name="Rest" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Rest"
 
 [node name="Rest10" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Rest x10"
 
 [node name="Search" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Search"
 
 [node name="TrapIdentify" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Trap ID"
 
 [node name="PickupToggle" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
 toggle_mode = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "No Pickup"
 
 [node name="FightToDeath" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
 toggle_mode = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Fight To Death"
 
 [node name="Interrupt" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Interrupt"
 
 [node name="Quit" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 42)
 text = "Quit"
-
-[node name="Invincible" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid"]
-layout_mode = 2
-toggle_mode = true
-custom_minimum_size = Vector2(0, 34)
-text = "Invincible"
 
 [node name="EquipmentTab" type="MarginContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
 tab_title = "Equipment"
 
 [node name="EquipmentVBox" type="VBoxContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 8
-
-[node name="EquipmentHeader" type="Label" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox"]
-layout_mode = 2
-text = "Current Equipment"
+theme_override_constants/separation = 4
 
 [node name="EquipmentGrid" type="GridContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 columns = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 6
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
 
 [node name="WeaponLabel" type="Label" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
+horizontal_alignment = 1
+vertical_alignment = 1
 text = "Weapon"
 
 [node name="WeaponValue" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
 text = "[None]"
 
 [node name="ArmorLabel" type="Label" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
+horizontal_alignment = 1
+vertical_alignment = 1
 text = "Armor"
 
 [node name="ArmorValue" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
 text = "[None]"
 
 [node name="RingLeftLabel" type="Label" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
+horizontal_alignment = 1
+vertical_alignment = 1
 text = "Ring L"
 
 [node name="RingLeftValue" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
 text = "[None]"
 
 [node name="RingRightLabel" type="Label" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
+horizontal_alignment = 1
+vertical_alignment = 1
 text = "Ring R"
 
 [node name="RingRightValue" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 46)
 text = "[None]"
 
 [node name="InventoryTab" type="MarginContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs"]

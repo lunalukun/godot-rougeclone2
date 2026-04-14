@@ -23,6 +23,9 @@ action.zap=Zap
 action.throw=Throw
 action.pickup_toggle=No Pickup
 action.fight_to_death=All-Out
+action.stairs.descend=Descend
+action.stairs.ascend=Ascend
+action.stairs.disabled=Stairs
 
 symbol.button=Symbols
 symbol.title=Symbol Legend

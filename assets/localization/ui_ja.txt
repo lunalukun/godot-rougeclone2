@@ -23,6 +23,9 @@ action.zap=振る
 action.throw=投げる
 action.pickup_toggle=拾わず移動
 action.fight_to_death=決着戦
+action.stairs.descend=下りる
+action.stairs.ascend=上る
+action.stairs.disabled=階段
 
 symbol.button=記号一覧
 symbol.title=記号一覧

@@ -497,12 +497,13 @@ var SCROLL_SYLLABLES_EN: PackedStringArray = []
 @onready var rest_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Rest
 @onready var rest10_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Rest10
 @onready var fight_to_death_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/FightToDeath
-@onready var invincible_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Invincible
+@onready var invincible_button: Button = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow/Invincible
 @onready var interrupt_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Interrupt
 @onready var quit_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Quit
 @onready var pickup_toggle_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/PickupToggle
 @onready var zap_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Zap
 @onready var throw_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid/Throw
+@onready var action_grid: GridContainer = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/ControlsTab/ControlsTabVBox/ControlsMainRow/ControlsRightVBox/ActionGrid
 @onready var symbol_legend_button: Button = $RootMargin/VerticalSplit/PlayArea/PlayVBox/MiniMapTopRow/MiniMapSymbolsButton
 @onready var symbol_legend_popup: PopupPanel = $SymbolLegendPopup
 @onready var symbol_legend_title_label: Label = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendTitle
@@ -512,7 +513,6 @@ var SCROLL_SYLLABLES_EN: PackedStringArray = []
 @onready var symbol_monsters_tab: MarginContainer = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendTabs/SymbolMonstersTab
 @onready var symbol_monsters_text: RichTextLabel = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendTabs/SymbolMonstersTab/SymbolMonstersText
 @onready var symbol_legend_close_button: Button = $SymbolLegendPopup/SymbolLegendMargin/SymbolLegendVBox/SymbolLegendButtons/SymbolLegendClose
-@onready var equipment_header_label: Label = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentHeader
 @onready var weapon_label: Label = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid/WeaponLabel
 @onready var weapon_value_label: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid/WeaponValue
 @onready var armor_label: Label = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/BottomTabs/EquipmentTab/EquipmentVBox/EquipmentGrid/ArmorLabel
@@ -554,6 +554,7 @@ var SCROLL_SYLLABLES_EN: PackedStringArray = []
 @onready var identify_select_cancel_button: Button = $IdentifySelectPopup/IdentifySelectMargin/IdentifySelectVBox/IdentifySelectButtons/IdentifySelectCancel
 @onready var identify_select_confirm_button: Button = $IdentifySelectPopup/IdentifySelectMargin/IdentifySelectVBox/IdentifySelectButtons/IdentifySelectConfirm
 @onready var direction_pad_image: TextureRect = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/DirectionPadImage
+@onready var stairs_center_button: Button = $RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/DirectionPadImage/StairsCenterButton
 
 var _debug_log_path: String = ""
 var _debug_file_error_reported: bool = false
@@ -628,6 +629,7 @@ const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
 const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
 const AUTO_PLAY_FONT_SCALE_MAX: float = 1.8
 const MESSAGE_LINE_MIN_FONT_SIZE_MOBILE: int = 16
+const ACTION_GRID_BUTTON_MIN_HEIGHT_PX: float = 48.0
 
 var _called_name_counter: int = 1
 var _loaded_from_autosave: bool = false
@@ -665,11 +667,14 @@ func _ready() -> void:
 		_start_new_level()
 	_setup_move_mode_buttons()
 	_setup_symbol_legend_button()
+	_optimize_action_grid_layout()
+	_setup_item_select_popup_visuals()
 	_apply_bottom_tabs_touch_target()
 	_disable_keyboard_focus_for_mobile_ui()
 	_setup_direction_pad_mode_highlight()
 	_setup_inventory_palette_ui()
 	_apply_localized_texts()
+	_update_stairs_button_text()
 	_update_recent_message_log_view()
 	_update_invincible_button_text()
 	if _loaded_from_autosave:
@@ -719,6 +724,7 @@ func _ready() -> void:
 	identify_select_confirm_button.pressed.connect(_on_identify_select_confirm_pressed)
 	identify_select_cancel_button.pressed.connect(_on_identify_select_cancel_pressed)
 	identify_select_list.item_activated.connect(_on_identify_select_item_activated)
+	stairs_center_button.pressed.connect(_on_stairs_center_pressed)
 	direction_pad_image.gui_input.connect(_on_direction_pad_gui_input)
 	play_viewport.gui_input.connect(_on_play_text_gui_input)
 	play_text.gui_input.connect(_on_play_text_gui_input)
@@ -1018,12 +1024,92 @@ func _setup_symbol_legend_button() -> void:
 	symbol_legend_button.custom_minimum_size = Vector2(114, 26)
 	symbol_legend_button.focus_mode = Control.FOCUS_NONE
 	symbol_legend_button.remove_theme_font_size_override("font_size")
+	if invincible_button != null:
+		invincible_button.custom_minimum_size = Vector2(98, 26)
+		invincible_button.focus_mode = Control.FOCUS_NONE
+		invincible_button.remove_theme_font_size_override("font_size")
 
 	# Keep legend list text at normal readable size.
 	if symbol_items_text != null:
 		symbol_items_text.add_theme_font_size_override("normal_font_size", 14)
 	if symbol_monsters_text != null:
 		symbol_monsters_text.add_theme_font_size_override("normal_font_size", 14)
+
+func _optimize_action_grid_layout() -> void:
+	if action_grid == null:
+		return
+
+	action_grid.add_theme_constant_override("h_separation", 4)
+	action_grid.add_theme_constant_override("v_separation", 4)
+
+	for child in action_grid.get_children():
+		if child is Button:
+			var button: Button = child as Button
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			if button.custom_minimum_size.y < ACTION_GRID_BUTTON_MIN_HEIGHT_PX:
+				button.custom_minimum_size.y = ACTION_GRID_BUTTON_MIN_HEIGHT_PX
+
+func _setup_item_select_popup_visuals() -> void:
+	var panel_popups: Array[PopupPanel] = [call_name_popup, wand_select_popup, throw_select_popup, equip_select_popup, identify_select_popup]
+	for popup in panel_popups:
+		if popup == null:
+			continue
+		var panel_style := StyleBoxFlat.new()
+		panel_style.bg_color = Color(0.08, 0.08, 0.1, 0.97)
+		panel_style.border_color = Color(0.46, 0.52, 0.62, 1.0)
+		panel_style.border_width_left = 2
+		panel_style.border_width_top = 2
+		panel_style.border_width_right = 2
+		panel_style.border_width_bottom = 2
+		panel_style.corner_radius_top_left = 6
+		panel_style.corner_radius_top_right = 6
+		panel_style.corner_radius_bottom_left = 6
+		panel_style.corner_radius_bottom_right = 6
+		popup.add_theme_stylebox_override("panel", panel_style)
+
+	var cancel_buttons: Array[Button] = [call_name_cancel_button, wand_select_cancel_button, throw_select_cancel_button, equip_select_cancel_button, identify_select_cancel_button]
+	for button in cancel_buttons:
+		_apply_popup_action_button_style(button, false)
+
+	var confirm_buttons: Array[Button] = [call_name_confirm_button, wand_select_confirm_button, throw_select_confirm_button, equip_select_confirm_button, identify_select_confirm_button]
+	for button in confirm_buttons:
+		_apply_popup_action_button_style(button, true)
+
+func _apply_popup_action_button_style(button: Button, primary: bool) -> void:
+	if button == null:
+		return
+	button.custom_minimum_size = Vector2(108, 38)
+
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.18, 0.2, 0.23, 1.0) if not primary else Color(0.15, 0.34, 0.64, 1.0)
+	normal.border_color = Color(0.62, 0.68, 0.78, 1.0)
+	normal.border_width_left = 2
+	normal.border_width_top = 2
+	normal.border_width_right = 2
+	normal.border_width_bottom = 2
+	normal.corner_radius_top_left = 4
+	normal.corner_radius_top_right = 4
+	normal.corner_radius_bottom_left = 4
+	normal.corner_radius_bottom_right = 4
+
+	var hover: StyleBoxFlat = normal.duplicate()
+	hover.bg_color = normal.bg_color.lightened(0.14)
+
+	var pressed: StyleBoxFlat = normal.duplicate()
+	pressed.bg_color = normal.bg_color.darkened(0.18)
+
+	var disabled: StyleBoxFlat = normal.duplicate()
+	disabled.bg_color = Color(0.12, 0.12, 0.13, 0.9)
+	disabled.border_color = Color(0.35, 0.35, 0.38, 0.9)
+
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.97, 0.98, 1.0, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
 
 func _position_symbol_legend_button() -> void:
 	# Button is statically positioned in the scene under the minimap overlay.
@@ -1514,6 +1600,7 @@ func _apply_localized_texts() -> void:
 	_update_equipment_panel()
 	_apply_popup_labels_localized(is_ja)
 	_update_language_buttons()
+	_update_stairs_button_text()
 
 func _relocalize_hunger_status_text() -> void:
 	if moves_left <= FAINT_THRESHOLD:
@@ -1825,7 +1912,6 @@ func _monster_fallback_name_by_letter(ch: String) -> String:
 	return fallback_monster_names[idx]
 
 func _apply_equipment_labels_localized(is_ja: bool) -> void:
-	equipment_header_label.text = _ui("equipment.header", "Current Equipment")
 	weapon_label.text = _ui("equipment.weapon", "Weapon")
 	armor_label.text = _ui("equipment.armor", "Armor")
 	ring_left_label.text = _ui("equipment.ring_left", "Ring L")
@@ -3871,7 +3957,21 @@ func _remove_inventory_item_at(index: int) -> void:
 	_update_equipment_panel()
 
 func _update_stairs_button_text() -> void:
-	pass
+	if stairs_center_button == null:
+		return
+
+	var on_stairs: bool = _is_player_on_stairs() and not game_over
+	stairs_center_button.disabled = not on_stairs
+	stairs_center_button.modulate = INACTIVE_BUTTON_TINT if on_stairs else Color(0.74, 0.74, 0.74, 0.75)
+
+	if not on_stairs:
+		stairs_center_button.text = _ui("action.stairs.disabled", "Stairs")
+		return
+
+	if has_amulet:
+		stairs_center_button.text = _ui("action.stairs.ascend", "Ascend")
+	else:
+		stairs_center_button.text = _ui("action.stairs.descend", "Descend")
 
 func _update_move_mode_button_labels() -> void:
 	var step_base: String = _ui("mode.step", "STEP")
@@ -4290,8 +4390,11 @@ func _apply_move_by_mode(dr: int, dc: int) -> void:
 func _handle_direction_pad_center_command() -> void:
 	if _is_player_on_stairs():
 		_on_stairs_pressed()
+
+func _on_stairs_center_pressed() -> void:
+	if stairs_center_button == null or stairs_center_button.disabled:
 		return
-	_on_search_pressed()
+	_on_stairs_pressed()
 
 func _is_player_on_stairs() -> bool:
 	if rogue_row < MIN_ROW or rogue_row > (ROGUE_LINES - 2) or rogue_col < 0 or rogue_col >= ROGUE_COLUMNS:
