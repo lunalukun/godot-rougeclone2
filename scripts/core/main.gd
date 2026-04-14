@@ -616,9 +616,11 @@ const CONTENT_EDGE_EXTRA_PX: int = 4
 const PLAY_LINE_LEFT_PAD_CHARS_DESKTOP: int = 1
 const PLAY_LINE_LEFT_PAD_CHARS_MOBILE: int = 1
 const BOTTOM_TABS_TOUCH_MIN_HEIGHT_PX: float = 44.0
-const BOTTOM_TABS_FONT_SIZE: int = 16
+const BOTTOM_TABS_FONT_SIZE: int = 20
 const BOTTOM_TABS_H_PADDING_PX: int = 8
 const BOTTOM_TABS_V_PADDING_PX: int = 6
+const BOTTOM_TABS_CONTENT_TOP_GAP_PX: int = 0
+const BOTTOM_TABS_BAR_BOTTOM_GAP_PX: int = 0
 const TOMB_OVERLAY_VERTICAL_PAD_LINES: int = 0
 const TOMB_OVERLAY_ROW_SHIFT: int = -2
 const TOMB_OVERLAY_COL_SHIFT: int = 0
@@ -996,27 +998,26 @@ func _apply_status_line_hunger_color() -> void:
 func _apply_bottom_tabs_touch_target() -> void:
 	if bottom_tabs == null:
 		return
-
 	bottom_tabs.add_theme_font_size_override("font_size", BOTTOM_TABS_FONT_SIZE)
+
 	var tab_bar: TabBar = bottom_tabs.get_tab_bar()
 	if tab_bar == null:
 		return
-
-	var min_size: Vector2 = tab_bar.custom_minimum_size
-	min_size.y = max(min_size.y, BOTTOM_TABS_TOUCH_MIN_HEIGHT_PX)
-	tab_bar.custom_minimum_size = min_size
 	tab_bar.add_theme_font_size_override("font_size", BOTTOM_TABS_FONT_SIZE)
 
-	var stylebox_names: PackedStringArray = ["tab_selected", "tab_unselected", "tab_hovered", "tab_disabled"]
-	for stylebox_name in stylebox_names:
-		var stylebox: StyleBox = tab_bar.get_theme_stylebox(stylebox_name)
-		if stylebox is StyleBoxFlat:
-			var copy: StyleBoxFlat = (stylebox as StyleBoxFlat).duplicate()
-			copy.content_margin_left = max(copy.content_margin_left, float(BOTTOM_TABS_H_PADDING_PX))
-			copy.content_margin_right = max(copy.content_margin_right, float(BOTTOM_TABS_H_PADDING_PX))
-			copy.content_margin_top = max(copy.content_margin_top, float(BOTTOM_TABS_V_PADDING_PX))
-			copy.content_margin_bottom = max(copy.content_margin_bottom, float(BOTTOM_TABS_V_PADDING_PX))
-			tab_bar.add_theme_stylebox_override(stylebox_name, copy)
+	var panel_stylebox: StyleBox = bottom_tabs.get_theme_stylebox("panel")
+	if panel_stylebox is StyleBoxFlat:
+		var panel_copy: StyleBoxFlat = (panel_stylebox as StyleBoxFlat).duplicate()
+		panel_copy.content_margin_top = max(panel_copy.content_margin_top, float(BOTTOM_TABS_CONTENT_TOP_GAP_PX))
+		bottom_tabs.add_theme_stylebox_override("panel", panel_copy)
+	elif panel_stylebox is StyleBoxEmpty:
+		var empty_copy: StyleBoxEmpty = (panel_stylebox as StyleBoxEmpty).duplicate()
+		empty_copy.content_margin_top = max(empty_copy.content_margin_top, float(BOTTOM_TABS_CONTENT_TOP_GAP_PX))
+		bottom_tabs.add_theme_stylebox_override("panel", empty_copy)
+	else:
+		var fallback_panel := StyleBoxEmpty.new()
+		fallback_panel.content_margin_top = float(BOTTOM_TABS_CONTENT_TOP_GAP_PX)
+		bottom_tabs.add_theme_stylebox_override("panel", fallback_panel)
 
 func _setup_symbol_legend_button() -> void:
 	if symbol_legend_button == null:
