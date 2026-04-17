@@ -185,8 +185,8 @@ message.invincible.prevented_death=無敵モードにより死亡を回避した
 message.ranking.new_game_prompt=何か入力: 新規ゲーム
 message.fight_to_death.on=決着戦モードON。
 message.fight_to_death.off=決着戦モードOFF。
-message.invincible.on=無敵モードON。
-message.invincible.off=無敵モードOFF。
+message.invincible.on=無敵モードON。スコアは記録されません
+message.invincible.off=無敵モードOFF。スコアは記録されません
 
 death.poison_dart=毒矢に倒された
 death.killed_by_monster=%sに倒された

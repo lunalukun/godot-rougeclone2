@@ -400,6 +400,7 @@ var leaderboard_highlight_rank: int = -1
 var auto_fight_active: bool = false
 var fight_to_death_enabled: bool = false
 var invincible_debug_enabled: bool = false
+var score_invalidated_by_invincible: bool = false
 var action_interrupted: bool = false
 var auto_fight_dir_row: int = 0
 var auto_fight_dir_col: int = 0
@@ -1270,6 +1271,7 @@ func _capture_player_state() -> Dictionary:
 		"auto_fight_active": auto_fight_active,
 		"fight_to_death_enabled": fight_to_death_enabled,
 		"invincible_debug_enabled": invincible_debug_enabled,
+		"score_invalidated_by_invincible": score_invalidated_by_invincible,
 		"auto_fight_dir_row": auto_fight_dir_row,
 		"auto_fight_dir_col": auto_fight_dir_col,
 	}
@@ -1448,6 +1450,7 @@ func _apply_loaded_player_state(data: Dictionary) -> void:
 	auto_fight_active = bool(data.get("auto_fight_active", false))
 	fight_to_death_enabled = bool(data.get("fight_to_death_enabled", false))
 	invincible_debug_enabled = bool(data.get("invincible_debug_enabled", false))
+	score_invalidated_by_invincible = bool(data.get("score_invalidated_by_invincible", invincible_debug_enabled))
 	auto_fight_dir_row = int(data.get("auto_fight_dir_row", 0))
 	auto_fight_dir_col = int(data.get("auto_fight_dir_col", 0))
 	_apply_stat_caps_original()
@@ -2958,7 +2961,7 @@ func _on_equip_select_confirm_pressed() -> void:
 		_close_equip_select_popup()
 		return
 	# Equipment change feedback should appear immediately even if another message is pending.
-	_clear_pending_messages_for_equipment_feedback()
+	_clear_pending_messages_for_immediate_feedback()
 
 	var target_slot: String = equip_select_target_slot
 	var candidate_indexes: Array[int] = equip_select_item_indexes.duplicate()
@@ -5463,8 +5466,10 @@ func _on_fight_to_death_pressed() -> void:
 func _on_invincible_toggled(enabled: bool) -> void:
 	invincible_debug_enabled = enabled
 	if enabled:
+		score_invalidated_by_invincible = true
 		_clear_status_locks_if_invincible()
 	_update_invincible_button_text()
+	_clear_pending_messages_for_immediate_feedback()
 	_set_message(_ui("message.invincible.on", "Invincible mode ON.") if enabled else _ui("message.invincible.off", "Invincible mode OFF."))
 	_render_play_area()
 
@@ -7419,7 +7424,7 @@ func _prepare_message_for_new_input() -> bool:
 	action_interrupted = false
 	return game_over
 
-func _clear_pending_messages_for_equipment_feedback() -> void:
+func _clear_pending_messages_for_immediate_feedback() -> void:
 	if top_message.is_empty() and message_queue.is_empty():
 		return
 	top_message = ""
@@ -8510,6 +8515,11 @@ func _end_game(won: bool, reason: String) -> void:
 
 func _record_score_once(cause_text: String) -> void:
 	if score_recorded:
+		return
+	if score_invalidated_by_invincible:
+		score_recorded = true
+		leaderboard_highlight_rank = -1
+		leaderboard_cache = _load_scores()
 		return
 	score_recorded = true
 	leaderboard_highlight_rank = -1

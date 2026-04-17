@@ -185,8 +185,8 @@ message.invincible.prevented_death=Invincible mode prevented death.
 message.ranking.new_game_prompt=Press any command: new game
 message.fight_to_death.on=Fight-to-death mode ON.
 message.fight_to_death.off=Fight-to-death mode OFF.
-message.invincible.on=Invincible mode ON.
-message.invincible.off=Invincible mode OFF.
+message.invincible.on=Invincible mode ON. Score will not be recorded.
+message.invincible.off=Invincible mode OFF. Score will not be recorded.
 
 death.poison_dart=killed by a poison dart
 death.killed_by_monster=killed by %s
