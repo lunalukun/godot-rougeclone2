@@ -6,3 +6,6 @@ export_presets.cfg
 # Android export artifacts
 *.apk
 *.idsig
+
+# Local signing materials
+.secrets/
