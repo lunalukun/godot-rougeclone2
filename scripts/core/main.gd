@@ -630,6 +630,8 @@ const DIRECTION_PAD_BASE_SIZE_PX: float = 156.0
 const DIRECTION_PAD_SCALE: float = 1.5
 const DIRECTION_PAD_HIT_SLOP_BASE_PX: float = 8.0
 const DIRECTION_PAD_HIT_SLOP_BASE_SCALE: float = 1.2
+const DIRECTION_PAD_HOLD_INITIAL_DELAY_SECONDS: float = 0.24
+const DIRECTION_PAD_HOLD_REPEAT_INTERVAL_SECONDS: float = 0.09
 const AUTO_PLAY_FONT_SCALE_MAX: float = 1.8
 const MESSAGE_LINE_MIN_FONT_SIZE_MOBILE: int = 16
 const ACTION_GRID_BUTTON_MIN_HEIGHT_PX: float = 48.0
@@ -646,6 +648,12 @@ var called_name_by_kind: Dictionary = {}
 var id_status_by_kind: Dictionary = {}
 var _minimap_texture: ImageTexture = ImageTexture.new()
 var preferred_language: String = "" # "ja" / "en" / "" (system default)
+var _direction_hold_active: bool = false
+var _direction_hold_row: int = 0
+var _direction_hold_col: int = 0
+var _direction_hold_pointer_id: int = -1
+var _direction_hold_elapsed: float = 0.0
+var _direction_hold_repeat_elapsed: float = 0.0
 
 func _ready() -> void:
 	_initialize_rng()
@@ -1510,12 +1518,38 @@ func _is_valid_inventory_index(index: int) -> bool:
 
 func _process(delta: float) -> void:
 	if symbol_legend_popup.visible:
+		_stop_direction_hold()
 		return
 	_process_nap_progress(delta)
 	if nap_remaining_turns > 0:
+		_stop_direction_hold()
 		return
+	_process_direction_pad_hold(delta)
 	if auto_fight_active:
 		_auto_fight_tick()
+
+func _process_direction_pad_hold(delta: float) -> void:
+	if not _direction_hold_active:
+		return
+	if game_over:
+		_stop_direction_hold()
+		return
+	if pending_targeting_action != "":
+		_stop_direction_hold()
+		return
+
+	var dt: float = max(0.0, delta)
+	_direction_hold_elapsed += dt
+	if _direction_hold_elapsed < DIRECTION_PAD_HOLD_INITIAL_DELAY_SECONDS:
+		return
+
+	_direction_hold_repeat_elapsed += dt
+	var safety: int = 0
+	while _direction_hold_repeat_elapsed >= DIRECTION_PAD_HOLD_REPEAT_INTERVAL_SECONDS and safety < 4:
+		_direction_hold_repeat_elapsed -= DIRECTION_PAD_HOLD_REPEAT_INTERVAL_SECONDS
+		if not _prepare_message_for_new_input():
+			_apply_move_by_mode(_direction_hold_row, _direction_hold_col)
+		safety += 1
 
 func _process_nap_progress(delta: float) -> void:
 	if nap_remaining_turns <= 0:
@@ -4214,13 +4248,28 @@ func _on_direction_pad_gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			_apply_direction_pad_press(event.position)
+			_start_direction_hold(event.position, event.index)
+		else:
+			_stop_direction_hold(event.index)
+	elif event is InputEventScreenDrag:
+		if _direction_hold_active and _direction_hold_pointer_id == event.index:
+			_update_direction_hold(event.position)
 	elif event is InputEventMouseButton:
 		# On mobile, a screen tap can generate both touch and emulated mouse events.
 		# Ignore mouse button events there to avoid duplicate moves.
 		if OS.has_feature("mobile"):
 			return
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			_apply_direction_pad_press(event.position)
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_apply_direction_pad_press(event.position)
+				_start_direction_hold(event.position, -2)
+			else:
+				_stop_direction_hold(-2)
+	elif event is InputEventMouseMotion:
+		if OS.has_feature("mobile"):
+			return
+		if _direction_hold_active and _direction_hold_pointer_id == -2 and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			_update_direction_hold(event.position)
 
 func _on_play_text_gui_input(event: InputEvent) -> void:
 	if _try_advance_post_game_from_input(event) or _try_advance_more_message_from_input(event):
@@ -4327,6 +4376,93 @@ func _apply_direction_pad_press(local_pos: Vector2) -> void:
 		_debug_emit("[INPUT] pos=%s tex=%s rect=%s cell=%s dir=%s" % [str(local_pos), str(tex_pos), str(input_rect), str(Vector2i(x_index, y_index)), str(Vector2i(dir_col, dir_row))])
 
 	_apply_move_by_mode(dir_row, dir_col)
+
+func _start_direction_hold(local_pos: Vector2, pointer_id: int) -> void:
+	if pending_targeting_action != "":
+		_stop_direction_hold()
+		return
+
+	var dir: Vector2i = _direction_pad_direction_from_local_pos(local_pos)
+	if dir.x == 99:
+		_stop_direction_hold(pointer_id)
+		return
+
+	_direction_hold_active = true
+	_direction_hold_row = dir.x
+	_direction_hold_col = dir.y
+	_direction_hold_pointer_id = pointer_id
+	_direction_hold_elapsed = 0.0
+	_direction_hold_repeat_elapsed = 0.0
+
+func _update_direction_hold(local_pos: Vector2) -> void:
+	var dir: Vector2i = _direction_pad_direction_from_local_pos(local_pos)
+	if dir.x == 99:
+		_stop_direction_hold()
+		return
+
+	if dir.x != _direction_hold_row or dir.y != _direction_hold_col:
+		_direction_hold_row = dir.x
+		_direction_hold_col = dir.y
+		_direction_hold_elapsed = 0.0
+		_direction_hold_repeat_elapsed = 0.0
+
+func _stop_direction_hold(pointer_id: int = -999) -> void:
+	if not _direction_hold_active:
+		return
+	if pointer_id != -999 and _direction_hold_pointer_id != pointer_id:
+		return
+
+	_direction_hold_active = false
+	_direction_hold_pointer_id = -1
+	_direction_hold_elapsed = 0.0
+	_direction_hold_repeat_elapsed = 0.0
+
+func _direction_pad_direction_from_local_pos(local_pos: Vector2) -> Vector2i:
+	var size := direction_pad_image.size
+	if size.x <= 0.0 or size.y <= 0.0:
+		return Vector2i(99, 99)
+
+	var input_rect: Rect2 = _get_direction_pad_input_rect()
+	if input_rect.size.x <= 0.0 or input_rect.size.y <= 0.0:
+		return Vector2i(99, 99)
+
+	var hit_slop_px: float = DIRECTION_PAD_HIT_SLOP_BASE_PX * (DIRECTION_PAD_SCALE / DIRECTION_PAD_HIT_SLOP_BASE_SCALE)
+	var hit_rect: Rect2 = input_rect.grow(hit_slop_px)
+	if not hit_rect.has_point(local_pos):
+		return Vector2i(99, 99)
+
+	var tex: Texture2D = direction_pad_image.texture
+	if tex == null:
+		return Vector2i(99, 99)
+
+	var tex_size: Vector2 = tex.get_size()
+	if tex_size.x <= 0.0 or tex_size.y <= 0.0:
+		return Vector2i(99, 99)
+
+	var tex_pos: Vector2 = _direction_pad_local_to_texture_pos(local_pos, input_rect, tex_size)
+	if tex_size.y > DIRECTION_PAD_MODE_ROW_HEIGHT_PX and tex_pos.y < DIRECTION_PAD_MODE_ROW_HEIGHT_PX:
+		return Vector2i(99, 99)
+
+	var y_offset: float = 0.0
+	var move_area_height: float = tex_size.y
+	if tex_size.y > DIRECTION_PAD_MODE_ROW_HEIGHT_PX:
+		y_offset = DIRECTION_PAD_MODE_ROW_HEIGHT_PX
+		move_area_height = tex_size.y - y_offset
+
+	if move_area_height <= 0.0:
+		return Vector2i(99, 99)
+
+	var normalized_x: float = clamp(tex_pos.x / tex_size.x, 0.0, 0.999999)
+	var normalized_y: float = clamp((tex_pos.y - y_offset) / move_area_height, 0.0, 0.999999)
+	var x_index: int = clamp(int(floor(normalized_x * 3.0)), 0, 2)
+	var y_index: int = clamp(int(floor(normalized_y * 3.0)), 0, 2)
+
+	var dir_row: int = y_index - 1
+	var dir_col: int = x_index - 1
+	if dir_row == 0 and dir_col == 0:
+		return Vector2i(99, 99)
+
+	return Vector2i(dir_row, dir_col)
 
 func _direction_pad_local_to_texture_pos(local_pos: Vector2, input_rect: Rect2, tex_size: Vector2) -> Vector2:
 	if input_rect.size.x <= 0.0 or input_rect.size.y <= 0.0:
