@@ -230,6 +230,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="StairsCenterButton" type="Button" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox/DirectionPadImage"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -242,6 +243,7 @@ offset_right = 38.0
 offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 text = "Down"
 
 [node name="BottomTabs" type="TabContainer" parent="RootMargin/VerticalSplit/ControlArea/ControlsMargin/BottomVBox"]

@@ -735,7 +735,6 @@ func _ready() -> void:
 	identify_select_confirm_button.pressed.connect(_on_identify_select_confirm_pressed)
 	identify_select_cancel_button.pressed.connect(_on_identify_select_cancel_pressed)
 	identify_select_list.item_activated.connect(_on_identify_select_item_activated)
-	stairs_center_button.pressed.connect(_on_stairs_center_pressed)
 	direction_pad_image.gui_input.connect(_on_direction_pad_gui_input)
 	play_viewport.gui_input.connect(_on_play_text_gui_input)
 	play_text.gui_input.connect(_on_play_text_gui_input)
@@ -4007,19 +4006,10 @@ func _remove_inventory_item_at(index: int) -> void:
 func _update_stairs_button_text() -> void:
 	if stairs_center_button == null:
 		return
-
-	var on_stairs: bool = _is_player_on_stairs() and not game_over
-	stairs_center_button.disabled = not on_stairs
-	stairs_center_button.modulate = INACTIVE_BUTTON_TINT if on_stairs else Color(0.74, 0.74, 0.74, 0.75)
-
-	if not on_stairs:
-		stairs_center_button.text = _ui("action.stairs.disabled", "Stairs")
-		return
-
-	if has_amulet:
-		stairs_center_button.text = _ui("action.stairs.ascend", "Ascend")
-	else:
-		stairs_center_button.text = _ui("action.stairs.descend", "Descend")
+	stairs_center_button.visible = false
+	stairs_center_button.disabled = true
+	stairs_center_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stairs_center_button.text = ""
 
 func _update_move_mode_button_labels() -> void:
 	var step_base: String = _ui("mode.step", "STEP")
