@@ -1086,10 +1086,18 @@ func _setup_item_select_popup_visuals() -> void:
 	for button in confirm_buttons:
 		_apply_popup_action_button_style(button, true)
 
-func _apply_popup_action_button_style(button: Button, primary: bool) -> void:
+	# Inventory panel action buttons should also be high-contrast.
+	_apply_popup_action_button_style(item_use_button, true, false)
+	_apply_popup_action_button_style(item_equip_button, false, false)
+	_apply_popup_action_button_style(item_drop_button, false, false)
+
+func _apply_popup_action_button_style(button: Button, primary: bool, enforce_minimum_size: bool = true) -> void:
 	if button == null:
 		return
-	button.custom_minimum_size = Vector2(108, 38)
+	if enforce_minimum_size:
+		button.custom_minimum_size = Vector2(108, 38)
+	else:
+		button.custom_minimum_size = Vector2.ZERO
 
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0.18, 0.2, 0.23, 1.0) if not primary else Color(0.15, 0.34, 0.64, 1.0)
@@ -4167,7 +4175,7 @@ func _setup_move_mode_buttons() -> void:
 	step_mode_button.pressed.connect(func() -> void: _set_move_mode("step"))
 	run_hit_mode_button.pressed.connect(func() -> void: _set_move_mode("run_hit"))
 	run_before_mode_button.pressed.connect(func() -> void: _set_move_mode("run_before"))
-	_set_move_mode("run_before")
+	_set_move_mode("step")
 
 func _set_move_mode(mode: String) -> void:
 	current_move_mode = mode
