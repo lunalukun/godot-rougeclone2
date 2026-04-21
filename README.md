@@ -17,7 +17,7 @@ English version: [README.en.md](README.en.md)
 
 ## スクリーンショット
 
-<img src="docs/images/play.png" alt="プレイ画面" width="286">
+<img src="docs/images/play_20260421.png" alt="プレイ画面" width="286">
 
 ## 参照元
 
